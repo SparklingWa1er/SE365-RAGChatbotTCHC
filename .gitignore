@@ -1,0 +1,63 @@
+# ============================================================
+#  .gitignore — chatbot RAG thủ tục hành chính
+#  Repo CHỈ chứa code + cấu hình. Data crawl + embeddings -> HuggingFace.
+# ============================================================
+
+# --- Bí mật / API key ---
+.env
+**/.env
+*.key
+
+# --- Dữ liệu crawl + corpus + embeddings  (TẢI TỪ HUGGINGFACE) ---
+data/raw/
+data/pdf/
+data/corpus/
+data/*.jsonl
+data/*.json
+data/*.log
+data/crawl_state.json
+data/failures.jsonl
+*.tar.gz
+.tmp/
+
+# --- Tài liệu tham khảo / sample (không cần thiết) ---
+references/
+
+# --- Bản clone kotaemon (third-party) + dữ liệu app sinh ra ---
+# kotaemon-app/ là bản clone Cinnamon/kotaemon đã chỉnh. KHÔNG vendor cả repo.
+# Các file tùy biến của dự án được lưu riêng trong kotaemon-setup/ (xem README).
+kotaemon-app/
+
+# --- Python ---
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+env/
+.ipynb_checkpoints/
+
+# --- Model cache / vector store (nếu lỡ nằm ngoài kotaemon-app) ---
+**/ktem_app_data/
+**/huggingface/
+**/vectorstore/
+**/docstore/
+*.onnx
+
+# --- Claude / trợ lý AI ---
+.claude/
+.claude/**
+**/.claude/
+CLAUDE.md
+CLAUDE.local.md
+.claude.json
+.mcp.json
+.cursor/
+.aider*
+.continue/
+
+# --- IDE / OS ---
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
