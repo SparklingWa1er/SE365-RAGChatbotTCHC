@@ -32,7 +32,10 @@ KH_OLLAMA_URL = config("KH_OLLAMA_URL", default="http://localhost:11434/v1/")
 
 # App can be ran from anywhere and it's not trivial to decide where to store app data.
 # So let's use the same directory as the flowsetting.py file.
-KH_APP_DATA_DIR = this_dir / "ktem_app_data"
+# KH_APP_DATA_DIR env override: dùng khi default path chứa ký tự non-ASCII
+# (hnswlib C++ không tạo được file .bin với Unicode path trên Windows).
+_app_data_default = str(this_dir / "ktem_app_data")
+KH_APP_DATA_DIR = Path(config("KH_APP_DATA_DIR", default=_app_data_default))
 KH_APP_DATA_EXISTS = KH_APP_DATA_DIR.exists()
 KH_APP_DATA_DIR.mkdir(parents=True, exist_ok=True)
 
