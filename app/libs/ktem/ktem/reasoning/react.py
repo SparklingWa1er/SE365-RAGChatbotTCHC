@@ -21,6 +21,16 @@ from kotaemon.agents.tools.mcp import create_tools_from_config
 from kotaemon.base import BaseComponent, Document, HumanMessage, Node, SystemMessage
 from kotaemon.llms import ChatLLM, PromptTemplate
 
+from rag.prompts import (  # component dự án (rag/prompts.py) — prompt tiếng Việt
+    DOCSEARCH_TOOL_DESCRIPTION,
+    REACT_QA_PROMPT,
+    REACT_REWRITE_PROMPT,
+)
+from rag.agent_tools import (  # tool dự án (rag/agent_tools.py)
+    NO_RELEVANT_DOC_MESSAGE,
+    BraveSearchTool,
+)
+
 from ..utils import SUPPORTED_LANGUAGE_MAP
 
 logger = logging.getLogger(__name__)
@@ -33,14 +43,7 @@ class DocSearchArgs(BaseModel):
 
 class DocSearchTool(BaseTool):
     name: str = "docsearch"
-    description: str = (
-        "A storage that contains internal documents. If you lack any specific "
-        "private information to answer the question, you can search in this "
-        "document storage. Furthermore, if you are unsure about which document that "
-        "the user refers to, likely the user already selects the target document in "
-        "this document storage, you just need to do normal search. If possible, "
-        "formulate the search query as specific as possible."
-    )
+    description: str = DOCSEARCH_TOOL_DESCRIPTION
     args_schema: Optional[Type[BaseModel]] = DocSearchArgs
     retrievers: list[BaseComponent] = []
 
@@ -48,14 +51,48 @@ class DocSearchTool(BaseTool):
         docs = []
         doc_ids = []
         for retriever in self.retrievers:
-            for doc in retriever(text=query):
+            retrieved = retriever(text=query)
+            # Relevance gate: chấm điểm liên quan rồi LỌC đoạn không liên quan, GIỐNG
+            # simple.py (llm_trulens_score). Mục đích: agent nhận tín hiệu "không thấy"
+            # rõ ràng để fallback sang web_search, thay vì luôn nhận top-k gần nhất
+            # (vốn trông như có kết quả dù lạc đề). Xem rag/agent_tools.py.
+            retrieved = self._filter_relevant(retriever, str(query), retrieved)
+            for doc in retrieved:
                 if doc.doc_id not in doc_ids:
                     docs.append(doc)
                     doc_ids.append(doc.doc_id)
 
+        if not docs:
+            return Document(content=NO_RELEVANT_DOC_MESSAGE)
+
         return self.prepare_evidence(docs)
 
-    def prepare_evidence(self, docs, trim_len: int = 4000):
+    @staticmethod
+    def _filter_relevant(retriever, query, docs):
+        """Lọc bỏ đoạn không liên quan dựa trên điểm relevance của retriever.
+
+        Dùng generate_relevant_scores (llm_trulens_score) khi retriever có bật LLM
+        scoring — đây chính là cổng simple.py dùng. Nếu scorer KHÔNG chạy (không có
+        điểm nào được gán), giữ nguyên docs để không vô tình loại sạch.
+        """
+        if not docs:
+            return []
+        scorer = getattr(retriever, "generate_relevant_scores", None)
+        if scorer is not None:
+            try:
+                docs = scorer(query, docs)
+            except Exception:
+                return docs  # scorer lỗi -> không chặn, trả docs gốc
+        scored = [d for d in docs if "llm_trulens_score" in d.metadata]
+        if not scored:
+            return docs  # scorer không chạy -> không có tín hiệu để lọc
+        return [d for d in scored if d.metadata.get("llm_trulens_score", 0.0) > 0]
+
+    # trim_len nâng 4000 -> 12000: trước đây chỉ giữ ~4000 ký tự ĐẦU (texts[0]) nên
+    # với 15 đoạn truy về, các mục "Thành phần hồ sơ"/"Lệ phí" thường bị cắt mất, chỉ
+    # còn "Trình tự thực hiện" -> agent thiếu dữ liệu để liệt kê giấy tờ rồi dễ bịa.
+    # 12000 token < max_context_length của agent (16000) nên không bị cắt thêm.
+    def prepare_evidence(self, docs, trim_len: int = 12000):
         evidence = ""
         table_found = 0
 
@@ -123,35 +160,12 @@ TOOL_REGISTRY = {
     "Wikipedia": WikipediaTool(),
     "LLM": LLMTool(),
     "SearchDoc": DocSearchTool(),
+    "WebSearch": BraveSearchTool(),  # web fallback (Brave) — xem rag/agent_tools.py
 }
 
-DEFAULT_QA_PROMPT = (
-    "Answer the following questions as best you can. Give answer in {lang}. "
-    "You have access to the following tools:\n"
-    "{tool_description}\n"
-    "Use the following format:\n\n"
-    "Question: the input question you must answer\n"
-    "Thought: you should always think about what to do\n\n"
-    "Action: the action to take, should be one of [{tool_names}]\n\n"
-    "Action Input: the input to the action, should be different from the action input "
-    "of the same action in previous steps.\n\n"
-    "Observation: the result of the action\n\n"
-    "... (this Thought/Action/Action Input/Observation can repeat N times)\n"
-    "#Thought: I now know the final answer\n"
-    "Final Answer: the final answer to the original input question\n\n"
-    "Begin! After each Action Input.\n\n"
-    "Question: {instruction}\n"
-    "Thought: {agent_scratchpad}\n"
-)
-
-DEFAULT_REWRITE_PROMPT = (
-    "Given the following question, rephrase and expand it "
-    "to help you do better answering. Maintain all information "
-    "in the original question. Keep the question as concise as possible. "
-    "Give answer in {lang}\n"
-    "Original question: {question}\n"
-    "Rephrased question: "
-)
+# Prompt tiếng Việt + domain rules — định nghĩa trong rag/prompts.py (xem import ở đầu file)
+DEFAULT_QA_PROMPT = REACT_QA_PROMPT
+DEFAULT_REWRITE_PROMPT = REACT_REWRITE_PROMPT
 
 
 class RewriteQuestionPipeline(BaseComponent):
@@ -300,6 +314,7 @@ class ReactAgentPipeline(BaseReasoning):
         pipeline.agent.output_lang = SUPPORTED_LANGUAGE_MAP.get(
             settings["reasoning.lang"], "English"
         )
+        pipeline.rewrite_pipeline.lang = pipeline.agent.output_lang
         pipeline.use_rewrite = states.get("app", {}).get("regen", False)
         pipeline.agent.prompt_template = PromptTemplate(settings[f"{prefix}.qa_prompt"])
 
@@ -314,7 +329,7 @@ class ReactAgentPipeline(BaseReasoning):
         except Exception as e:
             logger.exception(f"Failed to get LLM options: {e}")
 
-        tool_choices = ["Wikipedia", "Google", "LLM", "SearchDoc"]
+        tool_choices = ["SearchDoc", "WebSearch", "Wikipedia", "Google", "LLM"]
         try:
             tool_choices += mcp_manager.list_registered_mcp_servers()
         except Exception as e:
@@ -334,7 +349,9 @@ class ReactAgentPipeline(BaseReasoning):
             },
             "tools": {
                 "name": "Tools for knowledge retrieval",
-                "value": ["SearchDoc", "LLM"],
+                # Mặc định: docsearch (corpus nội bộ) + web_search (fallback Brave).
+                # Bỏ "LLM" (dummy_mode + dễ bịa, trái nguyên tắc chỉ dùng tài liệu).
+                "value": ["SearchDoc", "WebSearch"],
                 "component": "checkboxgroup",
                 "choices": tool_choices,
             },

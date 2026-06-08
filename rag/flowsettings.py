@@ -319,10 +319,13 @@ KH_RERANKINGS["cohere"] = {
     "default": True,
 }
 
+# ReAct đặt ĐẦU danh sách -> là engine mặc định khi mở app (agentic RAG).
+# SettingReasoningGroup.finalize() lấy options[0] làm default. Người dùng vẫn đổi
+# được sang Simple/Decompose/ReWOO trong UI: Settings -> Reasoning -> Reasoning options.
 KH_REASONINGS = [
+    "ktem.reasoning.react.ReactAgentPipeline",
     "ktem.reasoning.simple.FullQAPipeline",
     "ktem.reasoning.simple.FullDecomposeQAPipeline",
-    "ktem.reasoning.react.ReactAgentPipeline",
     "ktem.reasoning.rewoo.RewooAgentPipeline",
 ]
 KH_REASONINGS_USE_MULTIMODAL = config("USE_MULTIMODAL", default=False, cast=bool)
@@ -351,7 +354,7 @@ SETTINGS_REASONING = {
     },
     "max_context_length": {
         "name": "Max context length (LLM)",
-        "value": 32000,
+        "value": 64000,  # nâng từ 32000: nhiều đoạn lọt vào prompt hơn -> trả lời đầy đủ hơn (gpt-4o ~128k)
         "component": "number",
     },
 }
