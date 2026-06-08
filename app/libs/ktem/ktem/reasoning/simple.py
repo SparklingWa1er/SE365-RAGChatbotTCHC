@@ -285,15 +285,29 @@ class FullQAPipeline(BaseReasoning):
         # #3: chấm điểm liên quan ĐỒNG BỘ trước khi sinh câu trả lời, rồi lọc bỏ các
         # đoạn điểm 0 (LLM reranker đánh giá "không liên quan") để answer LLM chỉ thấy
         # ngữ cảnh liên quan. Trước đây chấm SONG SONG nên answer dùng cả đoạn lạc đề.
-        # Nếu TẤT CẢ đoạn đều 0 -> giữ nguyên docs để answer LLM tự từ chối theo prompt
-        # (tránh evidence rỗng). Đánh đổi: thêm ~vài giây rerank trước khi trả lời.
+        # Đánh đổi: thêm ~vài giây rerank trước khi trả lời.
+        had_docs = bool(docs)  # đã truy xuất được tài liệu (phân biệt với chào hỏi)
         if docs and self.retrievers:
             docs = self.retrievers[0].generate_relevant_scores(message, docs)
-            relevant = [
-                d for d in docs if d.metadata.get("llm_trulens_score", 0.0) > 0
-            ]
-            if relevant:
-                docs = relevant
+            docs = [d for d in docs if d.metadata.get("llm_trulens_score", 0.0) > 0]
+
+        # Truy xuất ra tài liệu nhưng reranker chấm TẤT CẢ = 0 (không đoạn nào thực sự
+        # liên quan) -> trả lời "ngoài phạm vi" CỐ ĐỊNH, KHÔNG gọi answer LLM. Lý do:
+        # khi evidence rỗng, citation_qa.py dùng nhánh `prompt = question` (bỏ qua QA
+        # prompt) nên LLM sẽ bịa từ kiến thức nền. Quyết định từ chối phải do CODE đưa ra
+        # dựa trên điểm rerank, không phó mặc LLM (tránh bịa + tránh bị mồi bởi lượt trước).
+        # Lưu ý: chào hỏi/xã giao -> retrieve() trả [] (had_docs=False) -> KHÔNG vào đây,
+        # vẫn để system_prompt chào tự nhiên.
+        if had_docs and not docs:
+            print("Tất cả đoạn rerank = 0 -> trả lời ngoài phạm vi (không gọi answer LLM)")
+            out_of_scope = (
+                "Cơ sở dữ liệu của tôi chỉ gồm các thủ tục hành chính công và hiện "
+                "không tìm thấy thủ tục phù hợp với câu hỏi này. Bạn vui lòng nêu cụ thể "
+                "tên thủ tục, hoặc tra cứu văn bản pháp luật liên quan để có thông tin "
+                "chi tiết hơn."
+            )
+            yield Document(channel="chat", content=out_of_scope)
+            return Document(content=out_of_scope)
 
         evidence_mode, evidence, images = self.evidence_pipeline(docs).content
 
@@ -407,8 +421,11 @@ class FullQAPipeline(BaseReasoning):
             },
             "highlight_citation": {
                 "name": "Citation style",
+                # "inline": chèn marker 【n】 sau mỗi ý + map n -> span tài liệu (nền cho
+                # UI icon + hover-nguồn). Đổi từ "highlight" (mặc định cũ, chỉ tô đoạn ở
+                # Information panel) sang "inline" để mỗi ý có trích dẫn riêng.
                 "value": (
-                    "highlight"
+                    "inline"
                     if not config("USE_LOW_LLM_REQUESTS", default=False, cast=bool)
                     else "off"
                 ),
@@ -421,12 +438,12 @@ class FullQAPipeline(BaseReasoning):
             },
             "create_mindmap": {
                 "name": "Create Mindmap",
-                "value": False,
+                "value": True,  # bật sơ đồ tư duy (hiển thị; không đổi độ chính xác text)
                 "component": "checkbox",
             },
             "create_citation_viz": {
                 "name": "Create Embeddings Visualization",
-                "value": False,
+                "value": True,  # bật biểu đồ trực quan hóa trích dẫn (cần >1 đoạn để vẽ)
                 "component": "checkbox",
             },
             "use_multimodal": {

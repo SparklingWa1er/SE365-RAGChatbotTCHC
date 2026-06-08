@@ -244,7 +244,7 @@ class DocumentRetrievalPipeline(BaseFileIndexRetriever):
             },
             "num_retrieval": {
                 "name": "Number of document chunks to retrieve",
-                "value": 10,
+                "value": 15,  # nâng từ 10: reranker có thêm ứng viên để chọn
                 "component": "number",
             },
             "retrieval_mode": {
@@ -258,7 +258,7 @@ class DocumentRetrievalPipeline(BaseFileIndexRetriever):
             },
             "prioritize_table": {
                 "name": "Prioritize table",
-                "value": False,
+                "value": False,  # markdown không có page_label -> gần như vô tác dụng, chỉ tốn thêm vòng truy hồi
                 "choices": [True, False],
                 "component": "checkbox",
             },
