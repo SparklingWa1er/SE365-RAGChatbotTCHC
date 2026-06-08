@@ -8,10 +8,9 @@ Mỗi thủ tục hành chính được render thành 1 file Markdown tự chứ
 Ngoài ra xuất `chunks.jsonl` (mỗi dòng = 1 section kèm metadata) cho trường hợp
 muốn tự kiểm soát chunking thay vì để kotaemon tự cắt.
 
-Chạy:
-  python parse.py                 # parse toàn bộ data/raw/*.json
-  python parse.py --limit 20      # thử 20 file
-  python parse.py --out ../data/corpus
+Chạy (từ gốc repo):
+  python pipeline/parser/parse.py            # parse toàn bộ data/raw/*.json
+  python pipeline/parser/parse.py --limit 20 # thử 20 file
 """
 from __future__ import annotations
 

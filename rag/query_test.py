@@ -1,11 +1,11 @@
-"""Test RAG end-to-end: truy hồi (e5) + sinh câu trả lời (Azure gpt-4o).
+"""Test RAG end-to-end: truy hồi (Azure text-embedding-3-large) + sinh câu trả lời (Azure gpt-4o).
 
 Bootstrap app -> lấy retriever của FileIndex -> truy hồi đoạn liên quan ->
 nhồi vào prompt tiếng Việt -> Azure LLM trả lời + trích nguồn.
 
-Chạy:
-  .venv/Scripts/python.exe query_test.py
-  .venv/Scripts/python.exe query_test.py "câu hỏi của bạn"
+Chạy (từ gốc repo):
+  .venv\\Scripts\\python.exe rag\\query_test.py
+  .venv\\Scripts\\python.exe rag\\query_test.py "câu hỏi của bạn"
 """
 from __future__ import annotations
 
