@@ -223,23 +223,29 @@ class FullQAPipeline(BaseReasoning):
             # clear previous info
             yield Document(channel="info", content=None)
 
-            # yield mindmap output
-            if mindmap_output:
-                yield mindmap_output
+            relevance_low = (
+                has_llm_score and max_llm_rerank_score < CONTEXT_RELEVANT_WARNING_SCORE
+            )
 
-            # yield citation plot output
-            if citation_plot_output:
-                yield citation_plot_output
-
-            # yield warning message
-            if has_llm_score and max_llm_rerank_score < CONTEXT_RELEVANT_WARNING_SCORE:
+            # #1: khi độ liên quan thấp, KHÔNG vẽ mindmap/citation (chúng sinh từ đoạn
+            # không khớp -> gây hiểu lầm là có thông tin). Chỉ hiện cảnh báo rõ ràng.
+            if relevance_low:
                 yield Document(
                     channel="info",
                     content=(
-                        "<h5>WARNING! Context relevance score is low. "
-                        "Double check the model answer for correctness.</h5>"
+                        "<h5>⚠️ Không tìm thấy thủ tục đủ liên quan trong cơ sở dữ "
+                        "liệu. Câu trả lời có thể không chính xác — vui lòng kiểm "
+                        "chứng.</h5>"
                     ),
                 )
+            else:
+                # yield mindmap output
+                if mindmap_output:
+                    yield mindmap_output
+
+                # yield citation plot output
+                if citation_plot_output:
+                    yield citation_plot_output
 
             # show QA score
             qa_score = (
@@ -276,18 +282,20 @@ class FullQAPipeline(BaseReasoning):
         print(f"Got {len(docs)} retrieved documents")
         yield from infos
 
-        evidence_mode, evidence, images = self.evidence_pipeline(docs).content
-
-        def generate_relevant_scores():
-            nonlocal docs
+        # #3: chấm điểm liên quan ĐỒNG BỘ trước khi sinh câu trả lời, rồi lọc bỏ các
+        # đoạn điểm 0 (LLM reranker đánh giá "không liên quan") để answer LLM chỉ thấy
+        # ngữ cảnh liên quan. Trước đây chấm SONG SONG nên answer dùng cả đoạn lạc đề.
+        # Nếu TẤT CẢ đoạn đều 0 -> giữ nguyên docs để answer LLM tự từ chối theo prompt
+        # (tránh evidence rỗng). Đánh đổi: thêm ~vài giây rerank trước khi trả lời.
+        if docs and self.retrievers:
             docs = self.retrievers[0].generate_relevant_scores(message, docs)
+            relevant = [
+                d for d in docs if d.metadata.get("llm_trulens_score", 0.0) > 0
+            ]
+            if relevant:
+                docs = relevant
 
-        # generate relevant score using
-        if evidence and self.retrievers:
-            scoring_thread = threading.Thread(target=generate_relevant_scores)
-            scoring_thread.start()
-        else:
-            scoring_thread = None
+        evidence_mode, evidence, images = self.evidence_pipeline(docs).content
 
         answer = yield from self.answering_pipeline.stream(
             question=message,
@@ -305,10 +313,6 @@ class FullQAPipeline(BaseReasoning):
             # clear the chat message and render again
             yield Document(channel="chat", content=None)
             yield Document(channel="chat", content=processed_answer)
-
-        # show the evidence
-        if scoring_thread:
-            scoring_thread.join()
 
         yield from self.show_citations_and_addons(answer, docs, message)
 
