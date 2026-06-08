@@ -1,6 +1,7 @@
 import logging
 import os
 from copy import deepcopy
+from pathlib import Path
 
 import gradio as gr
 from ktem.app import BasePage
@@ -17,9 +18,11 @@ logger = logging.getLogger(__name__)
 
 KH_DEMO_MODE = getattr(flowsettings, "KH_DEMO_MODE", False)
 KH_SSO_ENABLED = getattr(flowsettings, "KH_SSO_ENABLED", False)
-ASSETS_DIR = "assets/icons"
-if not os.path.isdir(ASSETS_DIR):
-    ASSETS_DIR = "libs/ktem/ktem/assets/icons"
+# Đường dẫn tuyệt đối tới thư mục icon (theo vị trí file, KHÔNG theo cwd). Sau khi
+# refactor, app chạy từ gốc repo nên path tương đối cũ "libs/ktem/ktem/assets/icons"
+# không còn đúng -> icon nút bấm hỏng. Thư mục assets nằm trong allowed_paths của
+# Gradio (xem app/app.py) nên file phục vụ được.
+ASSETS_DIR = str(Path(__file__).resolve().parents[2] / "assets" / "icons")
 
 
 logout_js = """
