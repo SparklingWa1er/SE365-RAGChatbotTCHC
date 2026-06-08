@@ -7,11 +7,11 @@ Thực hiện:
   3. Nén vectorstore + docstore + files + sql.db thành tar.gz
   4. (tuỳ chọn) Upload lên HF Dataset
 
-Dùng:
-  python pack_index.py
-  python pack_index.py --out my_index.tar.gz
-  python pack_index.py --hf-repo user/thu-tuc-hc-index
-  python pack_index.py --hf-repo user/thu-tuc-hc-index --hf-token hf_xxx
+Dùng (chạy từ gốc repo bằng .venv\\Scripts\\python.exe):
+  scripts\\pack_index.py
+  scripts\\pack_index.py --out my_index.tar.gz
+  scripts\\pack_index.py --hf-repo MinhTriet/dvc-rag-embeddings
+  scripts\\pack_index.py --hf-repo MinhTriet/dvc-rag-embeddings --hf-token hf_xxx
 """
 from __future__ import annotations
 

@@ -10,7 +10,7 @@ Quy trình 2 pha:
   - Lịch sự: delay + jitter giữa request, retry kèm backoff cho lỗi mạng/5xx.
   - Ghi nhận thất bại vào data/failures.jsonl để chạy lại bằng `--retry-failed`.
 
-Cách dùng:
+Cách dùng (từ thư mục pipeline/crawler/):
   python crawl.py                 # chạy đầy đủ (list nếu cần, rồi detail)
   python crawl.py --list-only     # chỉ làm mới index danh sách
   python crawl.py --limit 20      # chỉ tải 20 thủ tục đầu (smoke test)

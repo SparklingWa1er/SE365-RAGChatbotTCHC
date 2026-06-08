@@ -1,15 +1,13 @@
 """Nạp corpus Markdown thủ tục hành chính vào kotaemon (FileIndex).
 
 Bootstrap app headless -> lấy indexing pipeline -> stream các file .md vào
-vector store (embedding bge-m3) + doc store.
+vector store (embedding Azure text-embedding-3-large, 3072d) + doc store.
 
-Lần chạy ĐẦU sẽ tải model bge-m3 (~2GB qua fastembed) nên hơi lâu.
-
-Chạy:
-  .venv/Scripts/python.exe ingest_corpus.py                 # nạp toàn bộ corpus
-  .venv/Scripts/python.exe ingest_corpus.py --limit 5       # thử 5 file
-  .venv/Scripts/python.exe ingest_corpus.py --reindex       # nạp lại (ghi đè)
-  .venv/Scripts/python.exe ingest_corpus.py --corpus <dir>  # đổi thư mục .md
+Chạy (từ gốc repo):
+  .venv\\Scripts\\python.exe rag\\ingest_corpus.py                 # nạp toàn bộ corpus
+  .venv\\Scripts\\python.exe rag\\ingest_corpus.py --limit 5       # thử 5 file
+  .venv\\Scripts\\python.exe rag\\ingest_corpus.py --reindex       # nạp lại (ghi đè)
+  .venv\\Scripts\\python.exe rag\\ingest_corpus.py --corpus <dir>  # đổi thư mục .md
 """
 from __future__ import annotations
 

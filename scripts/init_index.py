@@ -2,18 +2,15 @@
 
 Dùng sau khi clone code repo. Chạy MỘT LẦN trước khi chạy app.
 
-Cách dùng:
+Cách dùng (chạy từ gốc repo, bằng Python trong venv):
   # Từ HF Dataset:
-  python init_index.py --hf-repo user/thu-tuc-hc-index
+  .venv\\Scripts\\python.exe scripts\\init_index.py --hf-repo MinhTriet/dvc-rag-embeddings
 
   # Từ file local (ổ USB / shared drive / đã download thủ công):
-  python init_index.py --from ktem_index.tar.gz
+  .venv\\Scripts\\python.exe scripts\\init_index.py --from ktem_index.tar.gz
 
   # Chỉ verify index đã có (không download):
-  python init_index.py --verify
-
-Script cần được chạy bằng Python trong venv:
-  kotaemon-app\\.venv\\Scripts\\python.exe ..\\kotaemon-setup\\init_index.py ...
+  .venv\\Scripts\\python.exe scripts\\init_index.py --verify
 """
 from __future__ import annotations
 
@@ -161,10 +158,10 @@ def main() -> None:
         extract(tar_path, data_dir)
     elif not args.verify:
         ap.print_help()
-        print("\nVí dụ:\n"
-              "  python init_index.py --from ktem_index.tar.gz\n"
-              "  python init_index.py --hf-repo user/thu-tuc-hc-index\n"
-              "  python init_index.py --verify")
+        print("\nVí dụ (chạy từ gốc repo):\n"
+              "  python scripts\\init_index.py --from ktem_index.tar.gz\n"
+              "  python scripts\\init_index.py --hf-repo MinhTriet/dvc-rag-embeddings\n"
+              "  python scripts\\init_index.py --verify")
         return
 
     # --- verify ---

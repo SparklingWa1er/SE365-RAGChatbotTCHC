@@ -6,16 +6,15 @@ Tốc độ mục tiêu: ~15 phút thay vì ~2.5 giờ (10 workers x Azure laten
 Input: data/corpus/chunks.jsonl (section-based chunks từ parse.py)
 Output: C:\\ktem_data\\user_data\\ (Chroma vectorstore + LanceDB docstore + sql.db)
 
-Dùng:
-    python fast_ingest.py                  # ingest toàn bộ
-    python fast_ingest.py --limit 5        # test 5 file
-    python fast_ingest.py --workers 20     # tăng số worker
-    python fast_ingest.py --reindex        # bỏ qua skip, ingest lại từ đầu
+Dùng (chạy từ gốc repo bằng .venv\\Scripts\\python.exe rag\\fast_ingest.py):
+    rag\\fast_ingest.py                  # ingest toàn bộ
+    rag\\fast_ingest.py --limit 5        # test 5 file
+    rag\\fast_ingest.py --workers 20     # tăng số worker
+    rag\\fast_ingest.py --reindex        # bỏ qua skip, ingest lại từ đầu
 
 Chú ý:
     - KHÔNG dùng theflow cache → KHÔNG bị treo khi force-kill
     - Nếu bị ngắt, chạy lại sẽ tự bỏ qua file đã ingest (--reindex để nạp lại)
-    - Chạy bằng: kotaemon-app\\.venv\\Scripts\\python.exe fast_ingest.py
 """
 from __future__ import annotations
 
@@ -40,7 +39,7 @@ import pyarrow as pa
 # ─── Paths ───────────────────────────────────────────────────────────────────
 
 _HERE = Path(__file__).resolve().parent
-# Hoạt động khi chạy từ kotaemon-app/ (ở đó script được copy vào) hoặc kotaemon-setup/
+# rag/fast_ingest.py -> _HERE.parent là gốc repo
 _REPO_ROOT = _HERE.parent
 CORPUS_DIR = _REPO_ROOT / "data" / "corpus"
 

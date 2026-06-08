@@ -4,9 +4,9 @@ Pin các họ package mà CODE kotaemon nhạy version (langchain*, llama-index*
 huggingface-hub, pydantic, gradio...) về đúng bản đã test trong uv.lock — tránh
 việc uv chọn bản mới nhất gây lỗi import (langchain.schema, HfFolder...).
 
-Chạy TỪ thư mục kotaemon-app (nơi có uv.lock):
-    python ../kotaemon-setup/gen_constraints.py
--> tạo ./constraints.txt
+Chạy TỪ thư mục chứa uv.lock của kotaemon:
+    python <repo>/scripts/gen_constraints.py
+-> tạo ./constraints.txt (rồi chép về gốc repo)
 """
 from __future__ import annotations
 
@@ -25,7 +25,7 @@ KEEP_PREFIX = (
 def main() -> int:
     lock = Path("uv.lock")
     if not lock.exists():
-        print("Không thấy uv.lock — hãy chạy script này từ thư mục kotaemon-app.")
+        print("Không thấy uv.lock — hãy chạy script này từ thư mục có uv.lock.")
         return 1
 
     txt = lock.read_text(encoding="utf-8")
