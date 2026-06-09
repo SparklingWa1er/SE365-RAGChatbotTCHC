@@ -72,6 +72,37 @@ class Render:
         ).replace("\n", "<br>")
 
     @staticmethod
+    def _ensure_table_blank_line(text: str) -> str:
+        """Chèn một dòng trống ngay trước khối bảng markdown nếu nó bị dán liền dòng phía
+        trên (vd "[Tên thủ tục — Phần]\\n| Cột |..."). Markdown chỉ nhận diện bảng khi có
+        dòng trống phía trước; chunk của corpus dán tiêu đề sát bảng nên cần chuẩn hoá."""
+        lines = text.split("\n")
+        out: list = []
+        for line in lines:
+            if (
+                line.lstrip().startswith("|")
+                and out
+                and out[-1].strip()
+                and not out[-1].lstrip().startswith("|")
+            ):
+                out.append("")
+            out.append(line)
+        return "\n".join(out)
+
+    @staticmethod
+    def table_or_linebreaks(text: str) -> str:
+        """Render bảng markdown -> bảng HTML. Nếu cú pháp bảng bị vỡ (vd đã chèn HTML
+        highlight <mark>/【n】 vào giữa hàng làm markdown không tạo được <table>), thì giữ
+        xuống dòng (mỗi hàng một dòng) để vẫn đọc được thay vì dồn thành một khối."""
+        normalized = Render._ensure_table_blank_line(text)
+        html = Render.table(normalized)
+        if "<table>" in html:
+            return html
+        if "|---" in text or "\n|" in text:
+            return normalized.replace("\n", "<br>")
+        return html
+
+    @staticmethod
     def preview(
         html_content: str,
         doc: RetrievedDocument,
@@ -148,7 +179,7 @@ class Render:
         elif doc.metadata.get("type", "") == "table_raw":
             doc_content = Render.table_preserve_linebreaks(doc.text)
         else:
-            doc_content = Render.table(doc.text)
+            doc_content = Render.table_or_linebreaks(doc.text)
 
         return Render.collapsible(
             header=Render.preview(header, doc),
@@ -217,7 +248,7 @@ class Render:
         elif doc.metadata.get("type", "") == "table_raw":
             rendered_doc_content = Render.table_preserve_linebreaks(doc.text)
         else:
-            rendered_doc_content = Render.table(text)
+            rendered_doc_content = Render.table_or_linebreaks(text)
 
         rendered_header = Render.preview(
             f"<i>{item_type_prefix}{get_header(doc)}</i>"
