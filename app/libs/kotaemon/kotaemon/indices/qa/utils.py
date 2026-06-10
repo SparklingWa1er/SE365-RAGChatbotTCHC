@@ -42,7 +42,7 @@ def find_text(search_span, context, min_length=5):
 
 
 def find_start_end_phrase(
-    start_phrase, end_phrase, context, min_length=5, max_excerpt_length=300
+    start_phrase, end_phrase, context, min_length=5, max_excerpt_length=600
 ):
     start_phrase, end_phrase = start_phrase.lower(), end_phrase.lower()
     context = context.lower()
@@ -73,7 +73,20 @@ def find_start_end_phrase(
 
         # check if the excerpt is too long
         if end_idx - start_idx > max_excerpt_length:
-            end_idx = start_idx + max_excerpt_length
+            # Cắt tại ranh giới từ/câu gần nhất TRƯỚC mốc max_excerpt_length, thay vì
+            # chặt cụt giữa từ (vd "...không có chứng thực t"). Ưu tiên dấu kết câu/phân
+            # tách (. ; ,) rồi tới khoảng trắng; nếu không có thì giữ cắt cứng. (context
+            # đã được lower() + thay \n bằng space ở trên nên chỉ xét các dấu này.)
+            hard_end = start_idx + max_excerpt_length
+            window = context[start_idx:hard_end]
+            cut = max(
+                window.rfind(". "),
+                window.rfind("; "),
+                window.rfind(", "),
+            )
+            if cut <= 0:
+                cut = window.rfind(" ")
+            end_idx = start_idx + cut + 1 if cut > 0 else hard_end
 
         final_match = (start_idx, end_idx)
     else:

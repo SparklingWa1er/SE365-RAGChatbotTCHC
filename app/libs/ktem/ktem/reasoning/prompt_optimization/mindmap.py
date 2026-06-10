@@ -6,6 +6,11 @@ from ktem.llms.manager import llms
 from kotaemon.base import BaseComponent, Document, HumanMessage, Node, SystemMessage
 from kotaemon.llms import ChatLLM, PromptTemplate
 
+from rag.prompts import (  # prompt tiếng Việt của dự án (rag/prompts.py)
+    MINDMAP_PROMPT_TEMPLATE as VI_MINDMAP_PROMPT_TEMPLATE,
+    MINDMAP_SYSTEM_PROMPT as VI_MINDMAP_SYSTEM_PROMPT,
+)
+
 logger = logging.getLogger(__name__)
 
 
@@ -39,28 +44,10 @@ class CreateMindmapPipeline(BaseComponent):
 
     llm: ChatLLM = Node(default_callback=lambda _: llms.get_default())
 
-    SYSTEM_PROMPT = """
-From now on you will behave as "MapGPT" and, for every text the user will submit, you are going to create a PlantUML mind map file for the inputted text to best describe main ideas. Format it as a code and remember that the mind map should be in the same language as the inputted context. You don't have to provide a general example for the mind map format before the user inputs the text.
-    """  # noqa: E501
-    MINDMAP_PROMPT_TEMPLATE = """
-Question:
-{question}
-
-Context:
-{context}
-
-Generate a sample PlantUML mindmap for based on the provided question and context above. Only includes context relevant to the question to produce the mindmap.
-
-Use the template like this:
-
-@startmindmap
-* Title
-** Item A
-*** Item B
-**** Item C
-*** Item D
-@endmindmap
-    """  # noqa: E501
+    # Prompt tiếng Việt + tinh chỉnh domain — định nghĩa ở rag/prompts.py (xem import đầu
+    # file). Giữ token @startmindmap/@endmindmap + dấu '*' để convert_uml_to_markdown parse.
+    SYSTEM_PROMPT = VI_MINDMAP_SYSTEM_PROMPT
+    MINDMAP_PROMPT_TEMPLATE = VI_MINDMAP_PROMPT_TEMPLATE
     prompt_template: str = MINDMAP_PROMPT_TEMPLATE
 
     @classmethod
@@ -91,6 +78,20 @@ Use the template like this:
 
         uml_text = self.llm(messages).text
         markdown_text = self.convert_uml_to_markdown(uml_text)
+
+        # Log quy trình để kiểm tra (trước đây luồng mindmap hoàn toàn im lặng): UML thô
+        # do LLM sinh + markdown sau chuyển đổi. Dùng print() (KHÔNG logger.info) cho đồng
+        # nhất với phần còn lại của pipeline — app không cấu hình logging nên logger.info bị
+        # mức WARNING mặc định của Python nuốt mất. Cảnh báo riêng khi parse ra rỗng (LLM
+        # trả sai định dạng → convert_uml_to_markdown nuốt IndexError trả "").
+        print("[mindmap] UML thô từ LLM:\n" + uml_text)
+        if markdown_text:
+            print("[mindmap] Markdown sau chuyển đổi:\n" + markdown_text)
+        else:
+            print(
+                "[mindmap] Markdown RỖNG — LLM không trả đúng @startmindmap/@endmindmap. "
+                "UML thô: " + repr(uml_text)
+            )
 
         return Document(
             text=markdown_text,

@@ -649,7 +649,9 @@ class ReactAgentPipeline(BaseReasoning):
             },
             "create_mindmap": {
                 "name": "Create Mindmap",
-                "value": False,
+                "value": True,  # bật sơ đồ tư duy (đồng nhất với Simple); chạy nền không
+                # chặn stream text, chỉ tốn thêm 1 lời gọi LLM. Bị bỏ qua khi nguồn yếu
+                # (relevance_low) trong show_citations_and_addons.
                 "component": "checkbox",
             },
             "create_citation_viz": {

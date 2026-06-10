@@ -211,18 +211,8 @@ class AnswerWithInlineCitation(AnswerWithContextPipeline):
 
         citation = None
         mindmap = None
-
-        def mindmap_call():
-            nonlocal mindmap
-            mindmap = self.create_mindmap_pipeline(context=evidence, question=question)
-
-        mindmap_thread = None
-
-        # execute function call in thread
-        if evidence:
-            if self.enable_mindmap:
-                mindmap_thread = threading.Thread(target=mindmap_call)
-                mindmap_thread.start()
+        # Mindmap được sinh SAU khi có câu trả lời (xem cuối hàm), không còn chạy song
+        # song trên evidence thô — để sơ đồ bám đúng nội dung đã trả lời.
 
         messages = []
         if self.system_prompt:
@@ -296,8 +286,25 @@ class AnswerWithInlineCitation(AnswerWithContextPipeline):
 
         citation = self.answer_to_citations(output)
 
-        if mindmap_thread:
-            mindmap_thread.join(timeout=CITATION_TIMEOUT)
+        # Sinh mindmap TỪ CÂU TRẢ LỜI ĐÃ TỔNG HỢP (không phải evidence thô) để sơ đồ luôn
+        # nhất quán với nội dung chat — tránh việc mindmap chọn số liệu/mốc khác với câu
+        # trả lời khi các nguồn trong evidence mâu thuẫn nhau. Chạy SAU khi đã có
+        # final_answer; vẫn bọc trong thread để giữ cơ chế timeout an toàn (CITATION_TIMEOUT).
+        if evidence and self.enable_mindmap:
+            answer_text = (final_answer or output).strip()
+            # bỏ marker trích dẫn 【n】 để không lẫn vào nhãn node mindmap
+            mindmap_context = re.sub(r"【\d+】", "", answer_text)
+
+            def mindmap_call():
+                nonlocal mindmap
+                mindmap = self.create_mindmap_pipeline(
+                    context=mindmap_context, question=question
+                )
+
+            if mindmap_context:
+                mindmap_thread = threading.Thread(target=mindmap_call)
+                mindmap_thread.start()
+                mindmap_thread.join(timeout=CITATION_TIMEOUT)
 
         # convert citation to link
         answer = Document(
