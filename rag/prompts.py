@@ -176,6 +176,10 @@ REACT_QA_CITATION_PROMPT = (
     "// 31/12/2026' thì đoạn đánh dấu phải chứa chính '50%' và '31/12/2026':\n"
     "START_PHRASE: chuỗi\n"
     "END_PHRASE: chuỗi\n\n"
+    "// QUAN TRỌNG — KHÔNG dùng lại một số 【number】 cho nhiều đoạn văn bản KHÁC NHAU.\n"
+    "// Khi liệt kê nhiều giấy tờ/mục riêng biệt (vd nhiều thành phần hồ sơ), MỖI mục là\n"
+    "// MỘT dữ kiện riêng → phải có MỘT số 【number】 riêng và MỘT cặp START/END_PHRASE\n"
+    "// riêng bao đúng mục đó. Không gộp nhiều mục dưới cùng một số trích dẫn.\n"
     "// Khi viết câu trả lời, chèn số trích dẫn 【number】 ngay sau mỗi ý/sự kiện lấy từ "
     "nguồn tương ứng. MỖI dữ kiện chỉ cần MỘT trích dẫn đại diện (nguồn rõ nhất); KHÔNG "
     "chèn nhiều 【number】 cho cùng một ý nếu không thật cần đối chiếu.\n"
@@ -184,14 +188,18 @@ REACT_QA_CITATION_PROMPT = (
     "BÁM SÁT VÍ DỤ SAU:\n"
     "CITATION LIST\n\n"
     "CITATION【1】\n"
-    "START_PHRASE: Thành phần hồ sơ gồm Tờ khai\n"
-    "END_PHRASE: kèm 01 bản chính theo mẫu CC01.\n\n"
+    "START_PHRASE: Tờ khai căn cước theo mẫu\n"
+    "END_PHRASE: mẫu CC01, 01 bản chính.\n\n"
     "CITATION【2】\n"
+    "START_PHRASE: Bản sao giấy khai sinh đối\n"
+    "END_PHRASE: với người chưa đủ 14 tuổi.\n\n"
+    "CITATION【3】\n"
     "START_PHRASE: Lệ phí cấp căn cước là\n"
     "END_PHRASE: theo Thông tư 59/2019/TT-BTC.\n\n"
     "FINAL ANSWER\n"
-    "Hồ sơ gồm Tờ khai căn cước theo mẫu CC01 (01 bản chính)【1】. Mức lệ phí được quy "
-    "định tại Thông tư 59/2019/TT-BTC【2】.\n\n"
+    "Hồ sơ gồm: Tờ khai căn cước theo mẫu CC01 (01 bản chính)【1】; Bản sao giấy khai "
+    "sinh đối với người chưa đủ 14 tuổi【2】. Mức lệ phí được quy định tại Thông tư "
+    "59/2019/TT-BTC【3】.\n\n"
     "QUESTION: {question}\n"
     "ANSWER:"
 )
@@ -210,4 +218,57 @@ REACT_REWRITE_PROMPT = (
     "toàn bộ thông tin trong câu hỏi gốc, càng ngắn gọn càng tốt. Trả lời bằng {lang}\n"
     "Câu hỏi gốc: {question}\n"
     "Câu hỏi đã diễn đạt lại: "
+)
+
+# ---------------------------------------------------------------------------
+# Prompt SINH MINDMAP (sơ đồ tư duy) — Việt hoá + tinh chỉnh cho domain thủ tục.
+# Thay cho prompt tiếng Anh mặc định của kotaemon (CreateMindmapPipeline).
+# QUAN TRỌNG: vẫn phải bọc kết quả trong @startmindmap ... @endmindmap và dùng dấu '*'
+# phân cấp — CreateMindmapPipeline.convert_uml_to_markdown parse đúng hai token này
+# (cắt giữa chúng + đổi '*' -> '#'). Đổi định dạng là gãy. Placeholder: {question},{context}
+# ---------------------------------------------------------------------------
+MINDMAP_SYSTEM_PROMPT = (
+    "Bạn là 'MapGPT' — chuyên gia lập sơ đồ tư duy (mind map) cho thủ tục hành chính "
+    "công Việt Nam. Với mỗi nội dung người dùng đưa, bạn tạo MỘT sơ đồ tư duy ở định "
+    "dạng PlantUML, bằng tiếng Việt, cô đọng và đúng cấu trúc. Không kèm giải thích hay "
+    "ví dụ mẫu trước khi nhận nội dung."
+)
+
+MINDMAP_PROMPT_TEMPLATE = (
+    "Câu hỏi:\n{question}\n\n"
+    "Ngữ cảnh:\n{context}\n\n"
+    "Hãy tạo một sơ đồ tư duy PlantUML từ ngữ cảnh trên, bằng tiếng Việt, tuân thủ "
+    "NGHIÊM NGẶT các quy tắc sau:\n"
+    "1. CHỈ đưa vào những khía cạnh mà CÂU HỎI thực sự hỏi. Bỏ qua thông tin trong ngữ "
+    "cảnh không liên quan đến câu hỏi (ví dụ: nếu chỉ hỏi giấy tờ và lệ phí thì KHÔNG "
+    "thêm nhánh trình tự thực hiện, thời hạn, nơi nộp...).\n"
+    "2. Mỗi node là NHÃN NGẮN GỌN (tối đa ~8 từ), nắm ý chính — KHÔNG chép nguyên câu "
+    "dài từ ngữ cảnh. Ví dụ: ghi 'Giấy tờ chứng minh người đại diện hợp pháp', KHÔNG "
+    "ghi cả đoạn 'Bản chụp có chứng thực giấy tờ do cơ quan có thẩm quyền...'.\n"
+    "3. GIỮ phân tầng theo điều kiện và GOM NHÓM khi liệt kê nhiều mục: khi một nhánh "
+    "có nhiều giấy tờ, hãy chia thành hai nhóm con — 'Bắt buộc chung' (giấy tờ ai cũng "
+    "phải nộp) và 'Theo trường hợp/đối tượng' (giấy tờ chỉ áp dụng cho trường hợp cụ "
+    "thể như cán bộ/lực lượng vũ trang, người dưới 14 tuổi, trường hợp khẩn cấp, mất hộ "
+    "chiếu...). Trong nhóm 'Theo trường hợp', mỗi giấy tờ phải nêu rõ điều kiện áp dụng "
+    "(đặt điều kiện làm node con). TUYỆT ĐỐI không liệt kê phẳng giấy tờ điều kiện ngang "
+    "hàng giấy tờ bắt buộc, tránh làm người đọc tưởng ai cũng phải nộp. Nếu ngữ cảnh "
+    "không phân biệt rõ bắt buộc/điều kiện thì không bịa ra nhóm.\n"
+    "4. TUYỆT ĐỐI không thêm thông tin ngoài ngữ cảnh; số liệu/mốc thời gian/mức phí "
+    "phải đúng nguyên văn ngữ cảnh.\n"
+    "5. Độ sâu hợp lý (2–4 cấp), cân đối; node gốc là tên thủ tục/chủ đề.\n\n"
+    "Dùng đúng mẫu sau (ví dụ minh hoạ kiểu gom nhóm bắt buộc/điều kiện):\n\n"
+    "@startmindmap\n"
+    "* Tên thủ tục\n"
+    "** Giấy tờ cần thiết\n"
+    "*** Bắt buộc chung\n"
+    "**** Tờ khai (mẫu TK01)\n"
+    "**** 02 ảnh 4x6\n"
+    "*** Theo trường hợp/đối tượng\n"
+    "**** Cán bộ, lực lượng vũ trang\n"
+    "***** Văn bản đề nghị của cơ quan quản lý\n"
+    "**** Người dưới 14 tuổi\n"
+    "***** Bản sao giấy khai sinh\n"
+    "** Lệ phí\n"
+    "*** Giảm 50% đến 31/12/2026\n"
+    "@endmindmap"
 )
