@@ -62,3 +62,17 @@ CLAUDE.local.md
 .idea/
 .DS_Store
 Thumbs.db
+
+# --- Frontend React (Node) — chỉ commit source, build lại bằng npm ---
+node_modules/
+frontend/dist/
+*.tsbuildinfo
+frontend/vite.config.js
+frontend/vite.config.d.ts
+
+# --- Công cụ dev cục bộ / agent (không thuộc code dự án) ---
+.agents/
+.playwright-mcp/
+skills-lock.json
+docs/
+sidebar-new.png

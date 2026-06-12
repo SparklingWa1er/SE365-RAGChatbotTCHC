@@ -38,6 +38,7 @@ from kotaemon.llms import ChatLLM, PromptTemplate
 
 from rag.prompts import (  # component dự án (rag/prompts.py) — prompt tiếng Việt
     DOCSEARCH_TOOL_DESCRIPTION,
+    REACT_CONTEXTUALIZE_PROMPT,
     REACT_QA_CITATION_PROMPT,
     REACT_QA_PROMPT,
     REACT_REWRITE_PROMPT,
@@ -158,7 +159,8 @@ class DocSearchTool(BaseTool):
                     retrieved_content = retrieved_item.metadata["window"]
                 else:
                     retrieved_content = retrieved_item.text
-                retrieved_content = retrieved_content.replace("\n", " ")
+                # GIỮ \n (không gộp thành space): vừa để panel Suy luận dựng được bảng
+                # markdown qua table_or_linebreaks, vừa cho LLM ngữ cảnh có cấu trúc hơn.
                 if retrieved_content not in evidence:
                     evidence += (
                         f"<br><b>Content from {source}: </b> "
@@ -194,6 +196,7 @@ TOOL_REGISTRY = {
 # Prompt tiếng Việt + domain rules — định nghĩa trong rag/prompts.py (xem import ở đầu file)
 DEFAULT_QA_PROMPT = REACT_QA_PROMPT
 DEFAULT_REWRITE_PROMPT = REACT_REWRITE_PROMPT
+DEFAULT_CONTEXTUALIZE_PROMPT = REACT_CONTEXTUALIZE_PROMPT
 
 
 class RewriteQuestionPipeline(BaseComponent):
@@ -220,6 +223,41 @@ class RewriteQuestionPipeline(BaseComponent):
         return self.llm(messages)
 
 
+class ContextualizeQuestionPipeline(BaseComponent):
+    """Viết lại câu hỏi follow-up thành câu hỏi ĐỘC LẬP dựa trên lịch sử hội thoại.
+
+    Giải tham chiếu ngầm ('thủ tục này', 'nó', 'cơ quan ấy'...). BẮT BUỘC cho RAG hội
+    thoại đa lượt: pha 1 (ReactAgent gom nguồn) là STATELESS với history — nếu không
+    contextualize, truy vấn follow-up mất ngữ cảnh và retrieve lạc chủ đề (vd hỏi tiếp
+    về 'cơ quan thực hiện' sau câu hỏi hộ chiếu lại ra thủ tục đất đai).
+
+    Chỉ chạy khi CÓ history; lượt đầu (history rỗng) trả nguyên câu hỏi, không gọi LLM.
+    """
+
+    llm: ChatLLM = Node(default_callback=lambda _: llms.get_default())
+    contextualize_template: str = DEFAULT_CONTEXTUALIZE_PROMPT
+    lang: str = "English"
+    n_last_interactions: int = 5
+
+    def run(self, question: str, history: list) -> Document:  # type: ignore
+        if not history:
+            return Document(text=question)
+        chat_history = "\n".join(
+            f"Người dùng: {human}\nTrợ lý: {ai}"
+            for human, ai in history[-self.n_last_interactions :]
+        )
+        prompt = PromptTemplate(self.contextualize_template).populate(
+            chat_history=chat_history,
+            question=question,
+            lang=self.lang,
+        )
+        messages = [
+            SystemMessage(content="You are a helpful assistant"),
+            HumanMessage(content=prompt),
+        ]
+        return self.llm(messages)
+
+
 class ReactAgentPipeline(BaseReasoning):
     """Question answering pipeline using ReAct agent."""
 
@@ -230,6 +268,10 @@ class ReactAgentPipeline(BaseReasoning):
     agent: ReactAgent = ReactAgent.withx()
     rewrite_pipeline: RewriteQuestionPipeline = RewriteQuestionPipeline.withx()
     use_rewrite: bool = False
+    # Contextualize câu hỏi follow-up bằng history TRƯỚC pha 1 (xem class trên).
+    contextualize_pipeline: ContextualizeQuestionPipeline = (
+        ContextualizeQuestionPipeline.withx()
+    )
 
     # Pha 2 (synthesis có inline citation) — tái dùng cỗ máy của Simple. Agent (pha 1)
     # chỉ GOM nguồn vào collected_docs; các pipeline dưới đây sinh câu trả lời có 【n】.
@@ -395,23 +437,28 @@ class ReactAgentPipeline(BaseReasoning):
             yield from without_citation
 
     def prepare_citation(self, step_id, step, output, status) -> Document:
-        # Header hiện "Step N: <suy luận>" để xem nhanh nội dung bước; chi tiết Action/Output
-        # nằm trong content, mặc định ĐÓNG — click vào mới bung ra.
-        header = "<b>Step {id}</b>: {log}".format(id=step_id, log=step.log)
-        content = (
-            "<b>Action</b>: <em>{tool}[{input}]</em>\n\n<b>Output</b>: {output}"
-        ).format(
-            tool=step.tool if status == "thinking" else "",
-            input=step.tool_input.replace("\n", "").replace('"', "")
-            if status == "thinking"
-            else "",
-            output=output if status == "thinking" else "Finished",
-        )
+        # Tiêu đề GỌN: "Bước N" (+ tên tool nếu đang gọi tool). Chi tiết suy nghĩ + Output
+        # nằm trong content, mặc định ĐÓNG — click mới bung ra.
+        is_thinking = status == "thinking"
+        header = "<b>Bước {id}</b>".format(id=step_id)
+        if is_thinking and step.tool:
+            header += " · <i>{tool}</i>".format(tool=step.tool)
+
+        parts = []
+        # Suy nghĩ/Action của agent (step.log đã chứa "Action/Action Input"); giữ xuống dòng.
+        log = (step.log or "").strip()
+        if log:
+            parts.append(Render.table_or_linebreaks(log))
+        # Output (Observation) render RIÊNG bằng table_or_linebreaks → dựng bảng markdown +
+        # giữ xuống dòng. KHÔNG gộp chung vào một Render.table (sẽ nuốt \n, làm hỏng bảng).
+        out = output if is_thinking else "Finished"
+        parts.append("<p><b>Output</b>:</p>" + Render.table_or_linebreaks(out))
+
         return Document(
             channel="info",
             content=Render.collapsible(
                 header=header,
-                content=Render.table(content),
+                content="".join(parts),
                 open=False,
             ),
         )
@@ -423,6 +470,23 @@ class ReactAgentPipeline(BaseReasoning):
         raise NotImplementedError
 
     def stream(self, message, conv_id: str, history: list, **kwargs):
+        # ---- Contextualize: giải tham chiếu ngầm của câu hỏi follow-up bằng history,
+        # TRƯỚC khi agent (pha 1) gom nguồn — vì agent stateless với history. Chỉ chạy
+        # khi CÓ history (lượt thứ 2 trở đi); lượt đầu giữ nguyên, không tốn lời gọi LLM.
+        # Cả pha 1 (retrieve) lẫn pha 2 (synthesis) dùng chung câu đã contextualize để
+        # nhất quán; pha 2 vẫn nhận history nên không mất giọng hội thoại.
+        if history:
+            contextualized = self.contextualize_pipeline(
+                question=message, history=history
+            )
+            standalone = (contextualized.text or "").strip()
+            if standalone and standalone != message:
+                message = standalone
+                yield Document(
+                    channel="info",
+                    content=f"Đã bổ sung ngữ cảnh cho truy vấn: {standalone}",
+                )
+
         if self.use_rewrite:
             rewrite = self.rewrite_pipeline(question=message)
             message = rewrite.text
@@ -571,6 +635,13 @@ class ReactAgentPipeline(BaseReasoning):
         )
         pipeline.rewrite_pipeline.lang = pipeline.agent.output_lang
         pipeline.use_rewrite = states.get("app", {}).get("regen", False)
+        # Contextualize follow-up dùng cùng LLM/ngôn ngữ; số lượt history lấy theo cấu
+        # hình n_last_interactions của synthesis cho nhất quán.
+        pipeline.contextualize_pipeline.llm = llm
+        pipeline.contextualize_pipeline.lang = pipeline.agent.output_lang
+        pipeline.contextualize_pipeline.n_last_interactions = settings[
+            f"{prefix}.n_last_interactions"
+        ]
         pipeline.agent.prompt_template = PromptTemplate(settings[f"{prefix}.qa_prompt"])
 
         # ---- Wiring pha 2: synthesis có inline citation (giống simple.py) ----

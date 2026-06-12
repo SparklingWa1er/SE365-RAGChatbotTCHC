@@ -1,0 +1,264 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+@import "@fontsource-variable/geist";
+
+@custom-variant dark (&:is(.dark *));
+
+/* Map biến theme (oklch ở :root/.dark bên dưới) sang token Tailwind v4. */
+@theme inline {
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+  --font-sans: "Geist Variable", ui-sans-serif, system-ui, sans-serif;
+}
+
+/* Tông UIT theo design handoff (accent UIT blue #1668c9 ≈ oklch 0.527 0.158 257). */
+:root {
+  --background: oklch(1 0 0); /* --bg #ffffff */
+  --foreground: oklch(0.18 0.012 264); /* --ink #0e1116 */
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.18 0.012 264);
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.18 0.012 264);
+  --primary: oklch(0.527 0.158 257); /* --accent #1668c9 */
+  --primary-foreground: oklch(1 0 0);
+  --secondary: oklch(0.955 0.018 257); /* --accent-soft #e9f0fb */
+  --secondary-foreground: oklch(0.527 0.158 257);
+  --muted: oklch(0.954 0.002 264); /* hover gray #f0f1f3 */
+  --muted-foreground: oklch(0.665 0.012 262); /* --muted #9097a1 */
+  --accent: oklch(0.955 0.018 257); /* --accent-soft #e9f0fb */
+  --accent-foreground: oklch(0.527 0.158 257);
+  --destructive: oklch(0.577 0.245 27.325);
+  --border: oklch(0.94 0 0); /* --border #ededee */
+  --input: oklch(0.925 0.003 264); /* --border-2 #e4e5e7 */
+  --ring: oklch(0.527 0.158 257);
+  --chart-1: oklch(0.527 0.158 257);
+  --chart-2: oklch(0.63 0.14 256); /* --accent-2 #3a86e8 */
+  --chart-3: oklch(0.72 0.12 250);
+  --chart-4: oklch(0.45 0.16 258);
+  --chart-5: oklch(0.38 0.13 260);
+  --radius: 0.625rem; /* chat-item 10px */
+  --sidebar: oklch(0.991 0 0); /* --side #fbfbfc */
+  --sidebar-foreground: oklch(0.18 0.012 264);
+  --sidebar-primary: oklch(0.527 0.158 257);
+  --sidebar-primary-foreground: oklch(1 0 0);
+  --sidebar-accent: oklch(0.955 0.018 257); /* --accent-soft #e9f0fb */
+  --sidebar-accent-foreground: oklch(0.527 0.158 257);
+  --sidebar-border: oklch(0.94 0 0);
+  --sidebar-ring: oklch(0.527 0.158 257);
+}
+
+.dark {
+  --background: oklch(0.145 0 0);
+  --foreground: oklch(0.985 0 0);
+  --card: oklch(0.205 0 0);
+  --card-foreground: oklch(0.985 0 0);
+  --popover: oklch(0.205 0 0);
+  --popover-foreground: oklch(0.985 0 0);
+  --primary: oklch(0.63 0.15 257);
+  --primary-foreground: oklch(1 0 0);
+  --secondary: oklch(0.269 0.02 264);
+  --secondary-foreground: oklch(0.985 0 0);
+  --muted: oklch(0.269 0.015 264);
+  --muted-foreground: oklch(0.708 0.02 264);
+  --accent: oklch(0.3 0.06 257);
+  --accent-foreground: oklch(0.9 0.05 257);
+  --destructive: oklch(0.704 0.191 22.216);
+  --border: oklch(1 0 0 / 10%);
+  --input: oklch(1 0 0 / 15%);
+  --ring: oklch(0.63 0.15 257);
+  --chart-1: oklch(0.87 0 0);
+  --chart-2: oklch(0.556 0 0);
+  --chart-3: oklch(0.439 0 0);
+  --chart-4: oklch(0.371 0 0);
+  --chart-5: oklch(0.269 0 0);
+  --sidebar: oklch(0.205 0.01 264);
+  --sidebar-foreground: oklch(0.985 0 0);
+  --sidebar-primary: oklch(0.63 0.15 257);
+  --sidebar-primary-foreground: oklch(1 0 0);
+  --sidebar-accent: oklch(0.3 0.06 257);
+  --sidebar-accent-foreground: oklch(0.9 0.05 257);
+  --sidebar-border: oklch(1 0 0 / 10%);
+  --sidebar-ring: oklch(0.63 0.15 257);
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  html,
+  body,
+  #root {
+    height: 100%;
+    margin: 0;
+  }
+  body {
+    @apply bg-background text-foreground font-sans;
+  }
+}
+
+/* ── Style cho HTML thô từ backend (answer/info) ─────────────────────────── */
+/* Không dùng @tailwindcss/typography nên style markdown của câu trả lời thủ công. */
+.prose {
+  line-height: 1.7;
+  word-break: break-word;
+}
+.prose > :first-child {
+  margin-top: 0;
+}
+.prose > :last-child {
+  margin-bottom: 0;
+}
+.prose p {
+  margin: 0.6em 0;
+}
+.prose ul,
+.prose ol {
+  margin: 0.6em 0;
+  padding-left: 1.5em;
+}
+.prose ul {
+  list-style: disc;
+}
+.prose ol {
+  list-style: decimal;
+}
+.prose li {
+  margin: 0.25em 0;
+}
+.prose li > ul,
+.prose li > ol {
+  margin: 0.25em 0;
+}
+.prose h1,
+.prose h2,
+.prose h3,
+.prose h4 {
+  margin: 1em 0 0.4em;
+  font-weight: 700;
+  line-height: 1.3;
+}
+.prose h1 {
+  font-size: 1.3em;
+}
+.prose h2 {
+  font-size: 1.2em;
+}
+.prose h3 {
+  font-size: 1.08em;
+}
+.prose strong {
+  font-weight: 700;
+}
+.prose a:not(.citation) {
+  color: var(--color-primary);
+  text-decoration: underline;
+}
+.prose code {
+  background: var(--color-muted);
+  padding: 0.1em 0.35em;
+  border-radius: 0.35em;
+  font-size: 0.88em;
+}
+.prose pre {
+  background: var(--color-muted);
+  padding: 0.8em 1em;
+  border-radius: 0.6em;
+  overflow-x: auto;
+  margin: 0.6em 0;
+}
+.prose pre code {
+  background: transparent;
+  padding: 0;
+}
+.prose blockquote {
+  border-left: 3px solid var(--color-border);
+  padding-left: 1em;
+  margin: 0.6em 0;
+  color: var(--color-muted-foreground);
+}
+/* Bảng: chia cột đều, chữ XUỐNG DÒNG vừa khung (không tràn ngang). */
+.prose table {
+  width: 100%;
+  table-layout: fixed;
+  border-collapse: collapse;
+  margin: 0.6em 0;
+}
+.prose th,
+.prose td {
+  border: 1px solid var(--color-border);
+  padding: 0.35em 0.55em;
+  text-align: left;
+  vertical-align: top;
+  overflow-wrap: break-word; /* ngắt ở khoảng trắng; chỉ vỡ từ khi token quá dài */
+}
+.prose th {
+  font-weight: 600;
+}
+/* Bảng evidence thường có cột mô tả đầu dài + các cột giá trị ngắn → cho cột đầu rộng hơn. */
+.prose th:first-child,
+.prose td:first-child {
+  width: 42%;
+}
+.prose hr {
+  border: none;
+  border-top: 1px solid var(--color-border);
+  margin: 1em 0;
+}
+
+/* Link trích dẫn 【n】 do backend chèn vào answer. */
+.prose a.citation {
+  display: inline-block;
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: var(--color-primary);
+  text-decoration: none;
+  vertical-align: super;
+}
+.prose a.citation:hover {
+  text-decoration: underline;
+}
+
+/* Panel info (Thought/Action + nguồn tô sáng). */
+.info-html mark {
+  background: #fef08a;
+  padding: 0 2px;
+}
+.info-html details {
+  margin: 0.25rem 0;
+}
+.info-html summary {
+  cursor: pointer;
+}
