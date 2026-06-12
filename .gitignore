@@ -1,6 +1,7 @@
 # ============================================================
 #  .gitignore — chatbot RAG thủ tục hành chính
-#  Repo CHỈ chứa code + cấu hình. Data crawl + embeddings -> HuggingFace.
+#  Repo chứa TOÀN BỘ code (gồm thư viện kotaemon đã vendor trong app/libs/).
+#  Chỉ KHÔNG chứa: .env, .venv, dữ liệu (data/ + index) — tải từ HuggingFace.
 # ============================================================
 
 # --- Bí mật / API key ---
@@ -20,29 +21,29 @@ data/failures.jsonl
 *.tar.gz
 .tmp/
 
-# --- Tài liệu tham khảo / sample (không cần thiết) ---
+# --- Tài liệu tham khảo / sample ---
 references/
 
-# --- Bản clone kotaemon (third-party) + dữ liệu app sinh ra ---
-# kotaemon-app/ là bản clone Cinnamon/kotaemon đã chỉnh. KHÔNG vendor cả repo.
-# Các file tùy biến của dự án được lưu riêng trong kotaemon-setup/ (xem README).
-kotaemon-app/
-
-# --- Python ---
-__pycache__/
-*.py[cod]
-*.egg-info/
+# --- Môi trường Python (tạo lại bằng uv khi clone — xem README) ---
 .venv/
 venv/
 env/
-.ipynb_checkpoints/
 
-# --- Model cache / vector store (nếu lỡ nằm ngoài kotaemon-app) ---
+# --- Index / cache app sinh ra lúc chạy (KHÔNG commit; index tải từ HF) ---
+.theflow/
 **/ktem_app_data/
+**/user_data/
 **/huggingface/
 **/vectorstore/
 **/docstore/
 *.onnx
+
+# --- Python build artifacts (kể cả từ editable install trong app/libs/) ---
+__pycache__/
+*.py[cod]
+*.egg-info/
+app/libs/**/build/
+*.log
 
 # --- Claude / trợ lý AI ---
 .claude/
@@ -61,3 +62,17 @@ CLAUDE.local.md
 .idea/
 .DS_Store
 Thumbs.db
+
+# --- Frontend React (Node) — chỉ commit source, build lại bằng npm ---
+node_modules/
+frontend/dist/
+*.tsbuildinfo
+frontend/vite.config.js
+frontend/vite.config.d.ts
+
+# --- Công cụ dev cục bộ / agent (không thuộc code dự án) ---
+.agents/
+.playwright-mcp/
+skills-lock.json
+docs/
+sidebar-new.png
