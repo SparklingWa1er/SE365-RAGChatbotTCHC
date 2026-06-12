@@ -115,6 +115,19 @@ REACT_QA_PROMPT = (
     "sách cập nhật, số liệu ngoài tài liệu đã lưu)? Nếu CÒN, bạn ĐƯỢC PHÉP gọi "
     "`Action: web_search` để BỔ SUNG đúng phần còn thiếu — không nhất thiết phải đợi "
     "docsearch rỗng. Nếu corpus đã trả lời đủ mọi khía cạnh thì KHÔNG cần web_search.\n"
+    "- ĐẶC BIỆT QUAN TRỌNG — khi câu hỏi cần thông tin THỰC TẾ/CỤ THỂ gắn với một địa "
+    "bàn hoặc một cơ quan (địa chỉ cụ thể, giờ làm việc, lịch tiếp nhận, số điện thoại, "
+    "đường dây nóng, đầu mối liên hệ, cách đặt lịch hẹn...) MÀ Observation từ docsearch "
+    "chỉ trả lời CHUNG CHUNG mang tính DẪN CHIẾU (ví dụ 'nộp tại Cơ quan Quản lý xuất "
+    "nhập cảnh Công an cấp tỉnh nơi cư trú', 'Trung tâm Phục vụ hành chính công', 'Ủy "
+    "ban nhân dân cấp xã nơi cư trú') mà KHÔNG kèm địa chỉ/giờ/liên hệ cụ thể cho ĐÚNG "
+    "địa bàn người dùng nêu, thì bạn PHẢI gọi tiếp `Action: web_search` để tra các chi "
+    "tiết cụ thể đó. Action Input hãy GHÉP: tên cơ quan suy ra từ corpus + địa bàn người "
+    "dùng nêu + thuộc tính cần tìm (ví dụ 'địa chỉ giờ làm việc Phòng Quản lý xuất nhập "
+    "cảnh Công an TP.HCM'). Hãy coi câu trả lời chung chung dạng dẫn chiếu là CHƯA ĐỦ khi "
+    "người dùng hỏi 'đến đâu', 'ở đâu', 'cơ quan nào', 'mấy giờ', 'liên hệ thế nào' — "
+    "đừng vội Final Answer khi mới chỉ có tên loại cơ quan mà chưa có thông tin liên hệ "
+    "thực tế.\n"
     "- Nếu docsearch báo 'KHÔNG tìm thấy tài liệu liên quan...': hãy thử đổi cách "
     "diễn đạt Action Input (cụ thể hơn, từ đồng nghĩa) và `Action: docsearch` LẠI một "
     "lần nữa. Nếu lần thứ hai vẫn báo không tìm thấy, hãy dùng `Action: web_search`.\n"
@@ -157,6 +170,25 @@ REACT_QA_CITATION_PROMPT = (
     "'tùy chọn' nếu ngữ cảnh không ghi.\n"
     "- Nếu thủ tục chỉ KHỚP MỘT PHẦN với câu hỏi (lệch độ tuổi, đối tượng, cấp thực "
     "hiện...), vẫn trình bày nhưng PHẢI nói rõ ngay từ đầu điểm chưa khớp.\n"
+    "- PHÂN BIỆT CẤP CƠ QUAN khi nêu nơi nộp hồ sơ/địa chỉ: khi cùng một thủ tục có "
+    "nhiều cấp tiếp nhận khác nhau (trung ương / tỉnh, thành phố / xã, phường...), hãy "
+    "gán ĐÚNG địa chỉ và đầu mối theo cấp tương ứng với tình huống người dùng; TUYỆT "
+    "ĐỐI KHÔNG lấy địa chỉ của cấp này gán cho cấp khác. (Ví dụ thủ tục xuất nhập cảnh: "
+    "trụ sở 'Cục Quản lý xuất nhập cảnh - Bộ Công an' như 44-46 Trần Phú, Hà Nội hoặc "
+    "333-335-337 Nguyễn Trãi, Q1 TP.HCM là cấp TRUNG ƯƠNG, chỉ nhận một số trường hợp "
+    "đặc thù — KHÁC với 'Phòng Quản lý xuất nhập cảnh Công an cấp tỉnh/thành phố' là nơi "
+    "người dân thường trú/tạm trú nộp hồ sơ thông thường; không được dùng địa chỉ Cục "
+    "cho ngữ cảnh 'cơ quan cấp tỉnh nơi cư trú'.)\n"
+    "- NÊU ĐỦ chi tiết thực tế đã có trong ngữ cảnh: nếu nguồn đã cung cấp các thông "
+    "tin liên hệ/thực hiện cụ thể mà câu hỏi cần (địa chỉ, giờ làm việc, lịch tiếp nhận, "
+    "số điện thoại, đầu mối, mức phí, thời hạn giải quyết...), hãy đưa ĐẦY ĐỦ những chi "
+    "tiết đó vào câu trả lời — KHÔNG lược bỏ thông tin đã có chỉ để cho ngắn gọn.\n"
+    "- KHÔNG SUY DIỄN VƯỢT NGUỒN: chỉ khẳng định một địa bàn/đơn vị có điểm tiếp nhận "
+    "riêng, hoặc một chi tiết (địa chỉ/giờ/đầu mối) áp dụng cho một nơi cụ thể, KHI nguồn "
+    "nói rõ như vậy. Nếu nguồn chỉ nêu ở cấp tỉnh/thành (hoặc không gắn với địa bàn nhỏ "
+    "hơn), hãy trình bày đúng phạm vi đó, KHÔNG tự gán cho một quận/phường/địa bàn mà "
+    "nguồn không nhắc tới. Với chi tiết lấy từ nguồn web 🌐 chưa thẩm định, nhắc người "
+    "dùng kiểm chứng lại trước khi đi.\n"
     "- Khi có, nêu kèm căn cứ pháp lý (số Thông tư/Nghị định/Quyết định).\n"
     "- Nguồn nào có nhãn bắt đầu bằng 🌐 là NGUỒN WEB tham khảo, CHƯA thẩm định: khi "
     "dùng thông tin từ nguồn đó, hãy nói ngắn gọn rằng đây là thông tin tham khảo từ "
@@ -218,6 +250,28 @@ REACT_REWRITE_PROMPT = (
     "toàn bộ thông tin trong câu hỏi gốc, càng ngắn gọn càng tốt. Trả lời bằng {lang}\n"
     "Câu hỏi gốc: {question}\n"
     "Câu hỏi đã diễn đạt lại: "
+)
+
+# ---------------------------------------------------------------------------
+# Prompt CONTEXTUALIZE — giải tham chiếu ngầm trong câu hỏi follow-up bằng lịch sử
+# hội thoại. BẮT BUỘC cho RAG đa lượt: pha 1 (agent gom nguồn) STATELESS với history,
+# nên nếu không viết lại, câu như "thủ tục này", "nó", "cơ quan ấy" sẽ mất ngữ cảnh
+# và retrieve lạc chủ đề. Chỉ chạy khi CÓ history. Placeholder: {lang},{chat_history},{question}
+# ---------------------------------------------------------------------------
+REACT_CONTEXTUALIZE_PROMPT = (
+    "Dưới đây là lịch sử hội thoại giữa người dùng và trợ lý thủ tục hành chính công, "
+    "rồi đến câu hỏi MỚI NHẤT của người dùng. Câu hỏi mới có thể tham chiếu ngầm đến "
+    "nội dung đã nói trước đó (ví dụ 'thủ tục này', 'nó', 'hồ sơ đó', 'cơ quan ấy', "
+    "'các thủ tục này').\n"
+    "Nhiệm vụ: viết lại câu hỏi mới thành MỘT câu hỏi ĐỘC LẬP, tự đầy đủ nghĩa khi đọc "
+    "tách rời — thay mọi đại từ/tham chiếu mơ hồ bằng đối tượng CỤ THỂ (tên thủ tục, "
+    "loại giấy tờ, cơ quan...) suy ra từ lịch sử hội thoại. Giữ nguyên ý định của người "
+    "dùng, KHÔNG thêm thông tin mới, KHÔNG trả lời câu hỏi. Nếu câu hỏi mới vốn đã tự "
+    "đầy đủ nghĩa thì giữ nguyên không đổi.\n"
+    "Chỉ trả về đúng câu hỏi đã viết lại, bằng {lang}, không kèm giải thích hay tiền tố.\n\n"
+    "LỊCH SỬ HỘI THOẠI:\n{chat_history}\n\n"
+    "CÂU HỎI MỚI: {question}\n"
+    "CÂU HỎI ĐỘC LẬP: "
 )
 
 # ---------------------------------------------------------------------------
