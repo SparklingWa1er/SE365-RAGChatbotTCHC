@@ -72,8 +72,16 @@ KH_MODE = "dev"
 KH_SSO_ENABLED = config("KH_SSO_ENABLED", default=False, cast=bool)
 
 KH_FEATURE_CHAT_SUGGESTION = config(
-    "KH_FEATURE_CHAT_SUGGESTION", default=False, cast=bool
+    "KH_FEATURE_CHAT_SUGGESTION", default=True, cast=bool
 )
+# Gợi ý mặc định hiện khi hội thoại còn trống (chưa có lịch sử để LLM sinh follow-up).
+# Đặt theo ngôi người dùng hỏi trợ lý, đúng miền thủ tục hành chính công VN.
+KH_FEATURE_CHAT_SUGGESTION_SAMPLES = [
+    "Thủ tục cấp hộ chiếu phổ thông cần những giấy tờ gì?",
+    "Lệ phí và thời gian xử lý hồ sơ cấp căn cước công dân?",
+    "Cách đăng ký khai sinh cho con online như thế nào?",
+    "Thủ tục đăng ký thường trú gồm những bước nào?",
+]
 KH_FEATURE_USER_MANAGEMENT = config(
     "KH_FEATURE_USER_MANAGEMENT", default=True, cast=bool
 )

@@ -13,18 +13,19 @@ class SuggestFollowupQuesPipeline(BaseComponent):
 
     llm: ChatLLM = Node(default_callback=lambda _: llms.get_default())
     SUGGEST_QUESTIONS_PROMPT_TEMPLATE = (
-        "Based on the chat history above. "
-        "your task is to generate 3 to 5 relevant follow-up questions. "
-        "These questions should be simple, very concise, "
-        "and designed to guide the conversation further. "
-        "Respond in JSON format with 'questions' key. "
+        "Based on the chat history above, generate 3 to 5 relevant follow-up "
+        "questions that THE USER would naturally ask the assistant next. "
+        "Write each question from the user's point of view (the user is asking, "
+        "the assistant answers) — do NOT phrase them as the assistant asking the "
+        "user. The questions must be simple, very concise, and continue the same "
+        "topic. Respond in JSON format with 'questions' key. "
         "Answer using the language {lang} same as the question. "
     )
     prompt_template: str = SUGGEST_QUESTIONS_PROMPT_TEMPLATE
-    extra_prompt: str = """Example of valid response:
+    extra_prompt: str = """Example of valid response (note: questions are asked BY the user TO the assistant):
 ```json
 {
-    "questions": ["the weather is good", "what's your favorite city"]
+    "questions": ["Lệ phí cấp hộ chiếu là bao nhiêu?", "Còn các loại hộ chiếu nào khác?"]
 }
 ```"""
     lang: str = "English"

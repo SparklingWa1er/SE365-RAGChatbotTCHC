@@ -104,7 +104,7 @@ class ConversationControl(BasePage):
 
         with gr.Row() as self._new_delete:
             self.cb_suggest_chat = gr.Checkbox(
-                value=False,
+                value=True,
                 label="Suggest chat",
                 min_width=10,
                 scale=6,
