@@ -83,6 +83,9 @@ def get_conversation(conv_id: str) -> Optional[dict]:
             "messages": ds.get("messages", []),
             "chat_suggestions": ds.get("chat_suggestions", []),
             "selected": ds.get("selected", {}),
+            # HTML các bước suy luận (Thought/Action/Observation + nguồn) theo từng lượt,
+            # khớp 1-1 với messages — dùng để hiện lại dropdown suy luận khi tải lại trang.
+            "reasoning": ds.get("retrieval_messages", []),
         }
 
 

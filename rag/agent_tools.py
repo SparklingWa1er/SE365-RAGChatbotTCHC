@@ -33,6 +33,13 @@ NO_RELEVANT_DOC_MESSAGE = (
     "KHÔNG tìm thấy tài liệu liên quan trong cơ sở dữ liệu thủ tục hành chính nội bộ."
 )
 
+# Tín hiệu khi agent lặp lại y hệt một truy vấn đã tra (E2) — buộc đổi từ khoá thay vì
+# phí phạm vòng lặp. DocSearchTool trả chuỗi này khi gặp Action Input trùng.
+REPEATED_QUERY_MESSAGE = (
+    "Bạn đã tra truy vấn này rồi (kết quả như các Observation trước). Hãy đổi từ khoá "
+    "KHÁC HẲN, thử công cụ khác, hoặc kết luận nếu đã đủ thông tin."
+)
+
 # Nhãn gọn cho nguồn web (dùng làm file_name của web-doc). Pha synthesis nhận diện
 # tiền tố 🌐 này để gắn ký hiệu trích dẫn riêng (xem rag/prompts.py:REACT_QA_CITATION_PROMPT)
 # và phân biệt với nguồn corpus chính thống trong panel Information.
@@ -44,6 +51,52 @@ WEB_SOURCE_MARK = "🌐"
 WEB_DOC_SCORE = 0.2
 
 BRAVE_ENDPOINT = "https://api.search.brave.com/res/v1/web/search"
+
+
+class ToolContext:
+    """Tài nguyên request-scoped pipeline tiêm vào tool mỗi câu hỏi (mục A).
+
+    Thay cho chuỗi `if tool_name == ...` gán thủ công retrievers/doc_sink/llm
+    trong react.py:get_pipeline. Là plain class (không qua pydantic/theflow) để
+    truyền tự do retriever, llm và list dùng chung.
+    """
+
+    def __init__(self, retrievers=None, llm=None, doc_sink=None):
+        self.retrievers = retrievers if retrievers is not None else []
+        self.llm = llm
+        self.doc_sink = doc_sink
+
+
+class CitableTool(BaseTool):
+    """Base cho tool ReAct của dự án — gom 3 mục của khảo sát thiết kế:
+
+    - A (Dependency Injection): `bind(ctx)` nhận tài nguyên request-scoped → tool
+      tự lấy thứ mình cần, get_pipeline KHÔNG còn switch theo tên tool. Lớp con
+      override `bind` khi cần thêm (vd DocSearchTool lấy thêm retrievers).
+    - B (gom nguồn dùng chung): `emit(doc)` đẩy MỘT nguồn citable vào doc_sink,
+      tự dedup theo doc_id → mỗi tool không phải tự lặp lại logic append/dedup.
+    - C (metadata điều phối): `priority` quyết định thứ tự liệt kê tool trong
+      prompt (nhỏ = ưu tiên trước). Hướng dẫn "khi nào dùng" đặt ở `description`
+      của từng tool (slot chuẩn của ReAct) → prompt trung tâm không nhắc tên tool.
+    """
+
+    priority: int = 100
+    doc_sink: Optional[list] = None
+
+    def bind(self, ctx: "ToolContext") -> None:
+        self.doc_sink = ctx.doc_sink
+
+    def emit(self, doc) -> None:
+        """Gom một nguồn citable cho pha synthesis; dedup theo doc_id (bỏ qua
+        khi doc_sink chưa được gán = chế độ không gom)."""
+        if self.doc_sink is None:
+            return
+        key = getattr(doc, "doc_id", None)
+        if key is not None and any(
+            getattr(d, "doc_id", None) == key for d in self.doc_sink
+        ):
+            return
+        self.doc_sink.append(doc)
 
 
 def _strip_html(text: str) -> str:
@@ -91,17 +144,22 @@ class BraveSearchArgs(BaseModel):
     query: str = Field(..., description="truy vấn tìm kiếm web bằng tiếng Việt")
 
 
-class BraveSearchTool(BaseTool):
-    """Tìm kiếm web qua Brave Search API (fallback ngoài corpus)."""
+class BraveSearchTool(CitableTool):
+    """Tìm kiếm web qua Brave Search API (nguồn tham khảo bổ sung ngoài corpus)."""
 
     name: str = "web_search"
+    # Mô tả mang luôn "khi nào dùng" (mục C) — KHÔNG nhắc tên tool khác, chỉ nói
+    # vai trò bổ sung khi nguồn nội bộ thiếu; thứ tự ưu tiên do `priority` lo.
     description: str = (
-        "Tìm kiếm trên internet (Brave Search). CHỈ dùng khi công cụ docsearch đã báo "
-        "không có tài liệu liên quan trong cơ sở dữ liệu nội bộ, hoặc câu hỏi về thông "
-        "tin mới/ngoài phạm vi thủ tục đã lưu. Đầu vào là truy vấn tìm kiếm tiếng Việt. "
-        "Kết quả là thông tin tham khảo từ web, CHƯA thẩm định."
+        "Tìm kiếm trên internet (Brave Search) để BỔ SUNG khi nguồn dữ liệu nội bộ "
+        "chính thống KHÔNG có hoặc còn thiếu (vd thông tin mới, chi tiết liên hệ cụ thể "
+        "của một cơ quan tại địa bàn mà nguồn nội bộ chỉ nói chung chung). Đầu vào là "
+        "truy vấn tìm kiếm tiếng Việt. Kết quả là thông tin tham khảo từ web, CHƯA thẩm định."
     )
     args_schema: Optional[Type[BaseModel]] = BraveSearchArgs
+
+    # Nguồn tham khảo → liệt kê/dùng SAU nguồn chính thống (mục C).
+    priority: int = 50
 
     # Số kết quả lấy về. Đọc key từ .env mỗi lần gọi (để đổi key không cần restart).
     count: int = 5
@@ -112,10 +170,9 @@ class BraveSearchTool(BaseTool):
     fetch_count: int = 2
     fetch_max_chars: int = 2000
 
-    # Bể gom nguồn (do pipeline gán mỗi request): mỗi kết quả web được bọc thành một
-    # Document citable rồi append vào đây để pha synthesis tạo inline citation. Pipeline
-    # reset list này mỗi câu hỏi (xem reasoning/react.py:get_pipeline). Để None = không gom.
-    doc_sink: Optional[list] = None
+    # doc_sink + emit() thừa kế từ CitableTool: mỗi kết quả web được bọc thành một
+    # Document citable rồi emit() để pha synthesis tạo inline citation. Pipeline gán
+    # doc_sink qua bind() mỗi câu hỏi (xem reasoning/react.py:get_pipeline).
 
     def _run_tool(self, query: AnyStr) -> Document:
         api_key = config("BRAVE_API_KEY", default="")
@@ -194,7 +251,7 @@ class BraveSearchTool(BaseTool):
                     doc_text = f"{title}. {desc}\n{page_text}".strip()
                 # RetrievedDocument (không phải Document) vì Render.collapsible_with_header_score
                 # đọc doc.score — Document thường không có field này (gây AttributeError).
-                self.doc_sink.append(
+                self.emit(
                     RetrievedDocument(
                         text=doc_text,
                         score=WEB_DOC_SCORE,
