@@ -72,6 +72,32 @@ Suy luận của agent):
 Ngoài repo: index (~1.5 GB, vectorstore + docstore) nằm ở `C:\ktem_data` (đặt qua
 `KH_APP_DATA_DIR` trong `.env`), tải sẵn từ HuggingFace — **không cần embed lại**.
 
+### Kiến trúc local sau khi clone + setup data xong
+
+Sau khi cài deps + chạy `init_index.py` (Bước 4), máy có hai phần tách biệt:
+
+```
+du-an/                         ← REPO (git): code + scripts, ~vài chục MB
+├── pipeline/ rag/ app/ scripts/ frontend/
+├── .env                       ← bạn tự điền Azure key (gitignore)
+├── .venv/                     ← Python deps (gitignore)
+└── frontend/node_modules/     ← npm deps (gitignore)
+
+C:\ktem_data\                  ← INDEX (ngoài repo): tải/giải nén từ HF, ~1.5 GB
+└── user_data/
+    ├── vectorstore/<uuid>/    ← Chroma HNSW: header/data_level0/length/link_lists.bin
+    │                            (≈33k vector × 3072d → data_level0.bin ~410 MB)
+    ├── docstore/index_1.lance ← LanceDB: text các chunk + FTS index (BM25)
+    ├── files/index_1/         ← bản .md gốc đã ingest
+    └── sql.db                 ← metadata ktem (index__1__source = 5208 thủ tục;
+                                 config private=false; bảng embedding RỖNG →
+                                 tự register lại từ .env lần chạy app đầu tiên)
+```
+
+> Index trong `C:\ktem_data` **không** nằm trong git — nó đến từ HF (đóng gói bởi
+> `pack_index.py`, mở bởi `init_index.py`). Code repo và index là hai nguồn độc lập:
+> đổi quy tắc parse/chunk thì phải **re-ingest + đóng gói lại HF** mới khớp (xem dưới).
+
 ---
 
 ## Yêu cầu
@@ -126,13 +152,16 @@ copy .env.example .env
 
 ### Bước 4 — Tải index đã embed từ HuggingFace
 
-Không cần crawl/embed lại — tải index xây sẵn (~728 MB nén):
+Không cần crawl/embed lại — tải index xây sẵn (~728 MB nén) từ HF Dataset
+[`MinhTriet/dvc-rag-embeddings`](https://huggingface.co/datasets/MinhTriet/dvc-rag-embeddings)
+(file `ktem_index.tar.gz`, public — đã đồng bộ với quy tắc parse/chunk mới nhất):
 
 ```powershell
 .venv\Scripts\python.exe scripts\init_index.py --hf-repo MinhTriet/dvc-rag-embeddings
 ```
 
-Script tải `ktem_index.tar.gz`, giải nén vào `C:\ktem_data`, rồi kiểm tra hợp lệ.
+Script tải `ktem_index.tar.gz`, giải nén vào `C:\ktem_data`, rồi kiểm tra hợp lệ
+(in số tài liệu = 5208, kích thước HNSW, trạng thái `.env`).
 Kiểm tra index bất kỳ lúc nào: `.venv\Scripts\python.exe scripts\init_index.py --verify`
 
 > **Không dùng HF?** Tải `ktem_index.tar.gz` thủ công rồi:
