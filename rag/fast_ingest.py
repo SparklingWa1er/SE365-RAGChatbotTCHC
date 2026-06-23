@@ -35,6 +35,62 @@ import lancedb
 import openai
 import pyarrow as pa
 
+try:
+    import tiktoken
+    _ENC = tiktoken.get_encoding("cl100k_base")  # tokenizer của text-embedding-3-*
+except Exception:
+    _ENC = None
+
+# Giới hạn cứng của embedding model là 8192 token/input. Chừa biên an toàn.
+EMBED_TOKEN_LIMIT = 8000
+
+
+def _tok_len(s: str) -> int:
+    return len(_ENC.encode(s)) if _ENC else len(s) // 2  # ước lượng nếu thiếu tiktoken
+
+
+def split_long_text(text: str, limit: int = EMBED_TOKEN_LIMIT) -> list[str]:
+    """Cắt một chunk vượt giới hạn token thành nhiều mảnh embeddable.
+
+    fast_ingest embed thẳng từng section (KHÔNG tự cắt như kotaemon) → section dài
+    (bảng hồ sơ lớn, trình tự dài) vượt 8192 token làm Azure trả 400 và MẤT cả file.
+    Cắt theo DÒNG (giữ ranh giới hàng bảng / bước), mỗi mảnh giữ lại dòng tiền tố
+    [Tên — Section] để không mất ngữ cảnh. Dòng đơn lẻ quá dài thì cắt cứng theo token.
+    """
+    if _tok_len(text) <= limit:
+        return [text]
+    lines = text.split("\n")
+    prefix = lines[0] if lines and lines[0].startswith("[") else ""
+    body = lines[1:] if prefix else lines
+    base = _tok_len(prefix) + 1 if prefix else 0
+
+    pieces, cur, cur_tok = [], [], base
+
+    def flush():
+        if cur:
+            joined = "\n".join(cur).strip()
+            if joined:
+                pieces.append(f"{prefix}\n{joined}" if prefix else joined)
+
+    for ln in body:
+        lt = _tok_len(ln) + 1
+        if cur and cur_tok + lt > limit:
+            flush()
+            cur, cur_tok = [], base
+        cur.append(ln)
+        cur_tok += lt
+    flush()
+
+    # phòng trường hợp một dòng đơn vẫn > limit -> cắt cứng theo token
+    out = []
+    for p in pieces:
+        if _ENC and len(_ENC.encode(p)) > limit:
+            toks = _ENC.encode(p)
+            out.extend(_ENC.decode(toks[i:i + limit]) for i in range(0, len(toks), limit))
+        else:
+            out.append(p)
+    return out or [text]
+
 
 # ─── Paths ───────────────────────────────────────────────────────────────────
 
@@ -120,6 +176,15 @@ def process_file(
     sha256 = hashlib.sha256(file_bytes).hexdigest()
     stat = md_path.stat()
     mtime = datetime.fromtimestamp(stat.st_mtime)
+
+    # Cắt nhỏ chunk vượt giới hạn token (giữ tiền tố section) trước khi embed
+    expanded: list[dict] = []
+    for c in chunks:
+        for piece in split_long_text(c["text"]):
+            nc = dict(c)
+            nc["text"] = piece
+            expanded.append(nc)
+    chunks = expanded
 
     texts = [c["text"] for c in chunks]
     all_embeddings: list[list[float]] = []

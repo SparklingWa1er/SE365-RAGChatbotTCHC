@@ -13,6 +13,7 @@ export interface ConversationDetail {
   messages: [string, string][]; // [[user, bot], ...]
   chat_suggestions: string[][]; // [["câu 1"], ["câu 2"], ...]
   selected: Record<string, unknown>;
+  reasoning?: string[]; // HTML suy luận theo từng lượt (khớp 1-1 với messages)
 }
 
 export interface Citation {
