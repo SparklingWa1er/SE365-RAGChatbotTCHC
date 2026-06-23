@@ -1,72 +1,47 @@
-import { Brain, ChevronRight, Globe, Quote } from "lucide-react";
+import { ChevronRight, Globe, Quote } from "lucide-react";
 import type { Citation } from "../api/types";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import InfoPanel from "./InfoPanel";
 import SafeHtml from "./SafeHtml";
 import { mdToHtml } from "../lib/markdown";
 
 interface Props {
   citations: Citation[];
-  infoHtml: string;
   width: number;
 }
 
-export default function SourcesPanel({ citations, infoHtml, width }: Props) {
+// Panel phải: CHỈ còn danh sách nguồn. Quá trình suy luận (Thought/Action) đã chuyển
+// thành dropdown trong từng lượt chat (xem ReasoningBlock), sơ đồ tư duy hiển thị dưới
+// câu trả lời.
+export default function SourcesPanel({ citations, width }: Props) {
   const cited = citations.filter((c) => c.cited);
   const others = citations.filter((c) => !c.cited);
   return (
-    <aside
-      className="flex shrink-0 flex-col bg-card"
-      style={{ width }}
-    >
-      <Tabs defaultValue="sources" className="flex min-h-0 flex-1 flex-col gap-0">
-        <TabsList className="m-2">
-          <TabsTrigger value="sources">
-            <Quote data-icon="inline-start" />
-            Nguồn{citations.length > 0 ? ` (${citations.length})` : ""}
-          </TabsTrigger>
-          <TabsTrigger value="reasoning">
-            <Brain data-icon="inline-start" />
-            Suy luận
-          </TabsTrigger>
-        </TabsList>
+    <aside className="flex shrink-0 flex-col bg-card" style={{ width }}>
+      <div className="flex items-center gap-2 px-3 py-2.5 text-sm font-medium text-foreground">
+        <Quote className="size-4" />
+        Nguồn{citations.length > 0 ? ` (${citations.length})` : ""}
+      </div>
 
-        <TabsContent value="sources" className="min-h-0 flex-1">
-          <ScrollArea className="h-full px-3 pb-3">
-            {citations.length === 0 ? (
-              <p className="px-1 py-4 text-xs text-muted-foreground">
-                Nguồn trích dẫn sẽ hiện ở đây sau khi có câu trả lời.
-              </p>
-            ) : (
-              <div className="flex min-w-0 flex-col gap-4">
-                {cited.length > 0 && (
-                  <SourceGroup title="Nguồn được trích dẫn" items={cited} />
-                )}
-                {others.length > 0 && (
-                  <SourceGroup
-                    title="Nguồn tham khảo"
-                    hint="không trích dẫn trực tiếp"
-                    items={others}
-                  />
-                )}
-              </div>
+      <ScrollArea className="min-h-0 flex-1 px-3 pb-3">
+        {citations.length === 0 ? (
+          <p className="px-1 py-4 text-xs text-muted-foreground">
+            Nguồn trích dẫn sẽ hiện ở đây sau khi có câu trả lời.
+          </p>
+        ) : (
+          <div className="flex min-w-0 flex-col gap-4">
+            {cited.length > 0 && (
+              <SourceGroup title="Nguồn được trích dẫn" items={cited} />
             )}
-          </ScrollArea>
-        </TabsContent>
-
-        <TabsContent value="reasoning" className="min-h-0 flex-1">
-          <ScrollArea className="h-full px-3 pb-3">
-            {infoHtml ? (
-              <InfoPanel html={infoHtml} />
-            ) : (
-              <p className="px-1 py-4 text-xs text-muted-foreground">
-                Các bước Thought / Action / Observation sẽ hiện ở đây.
-              </p>
+            {others.length > 0 && (
+              <SourceGroup
+                title="Nguồn tham khảo"
+                hint="không trích dẫn trực tiếp"
+                items={others}
+              />
             )}
-          </ScrollArea>
-        </TabsContent>
-      </Tabs>
+          </div>
+        )}
+      </ScrollArea>
     </aside>
   );
 }

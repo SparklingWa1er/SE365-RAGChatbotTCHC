@@ -38,6 +38,7 @@ FORMALITY_TYPE = {
     "STANDARD_INTERNAL": "Thủ tục nội bộ",
     "SPECIFIC": "Thủ tục đặc thù",
 }
+FEE_TYPE = {"FEE": "Lệ phí", "SERVICE_FEE": "Phí dịch vụ", "PRICE_LEVEL": "Mức giá"}
 LEVEL_FLAGS = [
     ("isWard", "Xã/Phường"), ("isProvince", "Tỉnh/Thành phố"),
     ("isMinistry", "Bộ/Trung ương"), ("isOtherAgency", "Cơ quan khác"),
@@ -69,6 +70,15 @@ def clean(text: Any) -> str:
     s = re.sub(r"[ \t]+", " ", s)
     s = re.sub(r"\n{3,}", "\n\n", s)
     return s.strip()
+
+
+def oneline(text: Any) -> str:
+    """Ép về MỘT dòng (gộp mọi khoảng trắng + xuống dòng thành 1 space).
+
+    Dùng cho ô bảng markdown & tên thủ tục: newline trong ô làm VỠ bảng và vỡ
+    tiền tố [Tên — Section] của chunk.
+    """
+    return re.sub(r"\s+", " ", clean(text)).strip()
 
 
 def yaml_escape(s: str) -> str:
@@ -106,7 +116,7 @@ def extract_meta(d: dict, idx_item: dict) -> dict:
     return {
         "id": d.get("id"),
         "ma_thu_tuc": code,
-        "ten": clean(d.get("name") or idx_item.get("name")),
+        "ten": oneline(d.get("name") or idx_item.get("name")),
         "linh_vuc": linh_vuc,
         "cap_thuc_hien": cap,
         "co_quan_ban_hanh": clean(d.get("departmentPromulgateName")
@@ -135,65 +145,107 @@ def sec_trinh_tu(d: dict) -> str:
 
 
 def fmt_fee(f: Any) -> str:
-    """Chuẩn hóa 1 khoản phí -> chuỗi đọc được.
+    """Chuẩn hóa 1 khoản phí -> chuỗi đọc được (dùng cho LIST, không phải ô bảng).
 
-    value = 0/None -> 'Miễn phí'; có số tiền -> '<số> <đơn vị>' (đơn vị mặc định
-    'đồng', dấu phân cách hàng nghìn kiểu VN). Ưu tiên name/description nếu có.
-    Tránh in nguyên dict thô như '{'type': 'FEE', 'value': 0, ...}'.
+    Dạng: '<Loại>: <số tiền/Miễn phí>[ — <mô tả>]'. Loại lấy từ FEE_TYPE
+    (FEE=Lệ phí, SERVICE_FEE=Phí dịch vụ). value=0 -> 'Miễn phí'. Mô tả dài để
+    nguyên (không vỡ bảng vì render dạng danh sách). Tránh in dict thô.
     """
     if not isinstance(f, dict):
         return clean(f)
-    name = clean(f.get("name"))
-    desc = clean(f.get("description"))
+    typ = FEE_TYPE.get(f.get("type"), "Phí")
+    name = oneline(f.get("name"))
+    desc = oneline(f.get("description"))
     val = f.get("value")
     try:
         num = float(val) if val not in (None, "") else None
     except (TypeError, ValueError):
         num = None
-    cur = clean(f.get("currencyId")) or "đồng"
+    cur = clean(f.get("currencyName")) or clean(f.get("currencyId")) or "đồng"
     money = ""
     if num is not None:
         money = "Miễn phí" if num == 0 else f"{num:,.0f} {cur}".replace(",", ".")
-    label = name or desc
-    if label and money and money != "Miễn phí":
-        return f"{label}: {money}"
-    return label or money or "Không có thông tin"
+    detail = name or desc
+    val_part = money or detail or "Không nêu mức"
+    out = f"{typ}: {val_part}"
+    if money and detail:  # có cả số tiền lẫn mô tả -> ghép mô tả vào sau
+        out += f" — {detail}"
+    return out
 
 
 def sec_cach_thuc(d: dict) -> str:
+    """Bảng Hình thức nộp | Thời hạn (phí tách riêng sang sec_phi để khỏi vỡ bảng)."""
     rows = []
     for m in d.get("executionMethods") or []:
         hinh_thuc = SUBMISSION.get(m.get("submissionMethod"), m.get("submissionMethod") or "")
         t = m.get("processingTime")
-        unit = TIME_UNIT.get(m.get("processingTimeUnit"), m.get("processingTimeUnit") or "")
-        thoi_han = f"{t} {unit}".strip() if t not in (None, "", 0) else (clean(m.get("description")) or "—")
-        fees = m.get("fees") or []
-        phi = "; ".join(fmt_fee(f) for f in fees) if fees else "Không có thông tin"
-        rows.append(f"| {hinh_thuc} | {thoi_han} | {phi} |")
+        unit = TIME_UNIT.get(m.get("processingTimeUnit"), "")
+        if t not in (None, "", 0) and unit:           # có số + đơn vị rõ ràng
+            thoi_han = f"{t} {unit}"
+        else:  # đơn vị OTHER/trống -> số trần không đơn vị gây hiểu nhầm; dùng mô tả nếu có
+            thoi_han = oneline(m.get("description")) or "—"
+        rows.append(f"| {hinh_thuc} | {thoi_han} |")
     if not rows:
         return ""
-    head = "| Hình thức nộp | Thời hạn giải quyết | Phí, lệ phí |\n|---|---|---|"
+    head = "| Hình thức nộp | Thời hạn giải quyết |\n|---|---|"
     return head + "\n" + "\n".join(rows)
 
 
+def sec_phi(d: dict) -> str:
+    """Phí/lệ phí dạng danh sách (dedup các khoản trùng giữa các hình thức nộp)."""
+    seen, items = set(), []
+    for m in d.get("executionMethods") or []:
+        for f in m.get("fees") or []:
+            s = fmt_fee(f)
+            if s and s not in seen:
+                seen.add(s)
+                items.append(f"- {s}")
+    return "\n".join(items)
+
+
 def sec_ho_so(d: dict) -> str:
-    rows = []
-    seen = set()
-    for case in (d.get("executionCases") or []) + (d.get("cases") or []):
+    """Thành phần hồ sơ, GIỮ cấu trúc theo từng case.
+
+    Mỗi case là một bộ giấy tờ theo một điều kiện áp dụng (vd 'Đối với cá nhân',
+    'Trường hợp ủy quyền — kèm theo một trong...'). Tên case (`name`) được render
+    làm tiêu đề nhóm để KHÔNG mất ngữ cảnh loại trừ giữa các bộ giấy tờ.
+    Dedup theo từng case (không toàn cục) để giữ giấy tờ lặp ở các điều kiện khác
+    nhau. Cột 'Bắt buộc' bị bỏ vì dữ liệu nguồn luôn rỗng (gây hiểu nhầm).
+    Bỏ mục isProcessingResult=True (là kết quả xử lý, không phải giấy tờ phải nộp).
+    """
+    blocks = []
+    cases = (d.get("executionCases") or []) + (d.get("cases") or [])
+    # bộ giấy tờ nền (không tên = nộp chung) lên trước, nhóm điều kiện (có tên) sau
+    cases = sorted(cases, key=lambda c: 1 if clean(c.get("name")) else 0)
+    for case in cases:
+        rows, seen = [], set()
         for pc in case.get("profileComponents") or []:
-            nm = clean(pc.get("name"))
+            if pc.get("isProcessingResult"):
+                continue
+            nm = oneline(pc.get("name"))
             if not nm or nm in seen:
                 continue
             seen.add(nm)
             chinh = pc.get("originalQty") or 0
             sao = pc.get("copyQty") or 0
             mau = "Có" if pc.get("hasElectronicForm") else ""
-            bb = "Bắt buộc" if pc.get("required") else ""
-            rows.append(f"| {nm} | {chinh} | {sao} | {mau} | {bb} |")
-    if not rows:
-        return ""
-    head = "| Tên giấy tờ | Bản chính | Bản sao | Mẫu đơn | Bắt buộc |\n|---|---|---|---|---|"
-    return head + "\n" + "\n".join(rows)
+            rows.append(f"| {nm} | {chinh} | {sao} | {mau} |")
+        if not rows:
+            continue
+        cn = re.sub(r"^[\*\-•\s]+", "", clean(case.get("name"))).strip()
+        if cn:
+            blocks.append(f"**{cn}**")
+        blocks.append(
+            "| Tên giấy tờ | Bản chính | Bản sao | Mẫu đơn |\n|---|---|---|---|\n"
+            + "\n".join(rows)
+        )
+    return "\n\n".join(blocks)
+
+
+def sec_dia_chi(d: dict) -> str:
+    """Địa chỉ/nơi tiếp nhận hồ sơ (dossierReceivingAddresses là chuỗi)."""
+    a = d.get("dossierReceivingAddresses")
+    return clean(a) if isinstance(a, str) else ""
 
 
 def sec_dieu_kien(d: dict) -> str:
@@ -203,25 +255,28 @@ def sec_dieu_kien(d: dict) -> str:
 def sec_can_cu(d: dict) -> str:
     out = []
     for lb in d.get("legalBasisesDetails") or []:
-        nm = clean(lb.get("name"))
+        nm = oneline(lb.get("name"))
         cd = clean(lb.get("code"))
-        out.append(f"- {nm}" + (f" (Mã: {cd})" if cd else ""))
+        # bỏ '(Mã: ...)' khi mã đã nằm trong tên (tránh lặp 'Luật X (Mã: X)')
+        out.append(f"- {nm}" + (f" (Mã: {cd})" if cd and cd not in nm else ""))
     return "\n".join(out)
 
 
 def sec_ket_qua(d: dict) -> str:
     out = []
     for r in d.get("resultsDetails") or []:
-        nm = clean(r.get("name"))
+        nm = oneline(r.get("name"))
         cd = clean(r.get("code"))
-        out.append(f"- {nm}" + (f" (Mã: {cd})" if cd else ""))
+        out.append(f"- {nm}" + (f" (Mã: {cd})" if cd and cd not in nm else ""))
     return "\n".join(out)
 
 
 SECTIONS = [
     ("Trình tự thực hiện", sec_trinh_tu),
     ("Cách thức thực hiện", sec_cach_thuc),
+    ("Phí, lệ phí", sec_phi),
     ("Thành phần hồ sơ", sec_ho_so),
+    ("Địa chỉ tiếp nhận hồ sơ", sec_dia_chi),
     ("Yêu cầu, điều kiện thực hiện", sec_dieu_kien),
     ("Căn cứ pháp lý", sec_can_cu),
     ("Kết quả thực hiện", sec_ket_qua),

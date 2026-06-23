@@ -7,6 +7,7 @@ interface Props {
   turns: Turn[];
   pendingUser: string | null;
   streamBot: string;
+  streamInfo: string;
   streaming: boolean;
   suggestions: string[][];
   canRegen: boolean;
@@ -23,6 +24,7 @@ export default function ChatView({
   turns,
   pendingUser,
   streamBot,
+  streamInfo,
   streaming,
   suggestions,
   canRegen,
@@ -79,6 +81,7 @@ export default function ChatView({
         turns={turns}
         pendingUser={pendingUser}
         streamBot={streamBot}
+        streamInfo={streamInfo}
         streaming={streaming}
         scrollTarget={scrollTarget}
         onScrolled={onScrolled}
