@@ -22,6 +22,7 @@ export type ReasoningMode = "ReAct" | "simple";
 export interface Turn {
   user: string;
   bot: string; // HTML (có thể chứa <a class="citation">)
+  info?: string; // HTML quá trình suy luận (Thought/Action/Observation + mindmap)
 }
 
 export default function App() {
@@ -42,9 +43,10 @@ export default function App() {
   const [pendingUser, setPendingUser] = useState<string | null>(null);
   const [streamBot, setStreamBot] = useState("");
   const abortRef = useRef<AbortController | null>(null);
-  // Bản mới nhất của bot text — đọc trong finally mà không lồng setState
+  // Bản mới nhất của bot text/info — đọc trong finally mà không lồng setState
   // (lồng setState trong updater bị StrictMode gọi 2 lần → nhân đôi lượt).
   const streamBotRef = useRef("");
+  const streamInfoRef = useRef("");
 
   // ── Search Modal (tìm trong HỘI THOẠI HIỆN TẠI) ──
   const [searchOpen, setSearchOpen] = useState(false);
@@ -74,7 +76,13 @@ export default function App() {
     setInfoHtml("");
     try {
       const d = await api.getConversation(id);
-      setTurns(d.messages.map(([user, bot]) => ({ user, bot })));
+      setTurns(
+        d.messages.map(([user, bot], i) => ({
+          user,
+          bot,
+          info: d.reasoning?.[i] ?? "",
+        })),
+      );
       setSuggestions(d.chat_suggestions?.length ? d.chat_suggestions : []);
     } catch (e) {
       console.error(e);
@@ -102,6 +110,7 @@ export default function App() {
       setPendingUser(text);
       setStreamBot("");
       streamBotRef.current = "";
+      streamInfoRef.current = "";
       setCitations([]);
       setInfoHtml("");
       setSuggestions([]);
@@ -130,7 +139,10 @@ export default function App() {
               streamBotRef.current = html;
               setStreamBot(html);
             },
-            onInfo: (html) => setInfoHtml(html),
+            onInfo: (html) => {
+              streamInfoRef.current = html;
+              setInfoHtml(html);
+            },
             onCitations: (items) => setCitations(items),
             onDone: (e) => {
               setSuggestions(e.suggestions ?? []);
@@ -148,9 +160,14 @@ export default function App() {
       } finally {
         // chốt lượt vào danh sách từ ref (không lồng setState → không nhân đôi)
         const finalBot = streamBotRef.current;
-        setTurns((prev) => [...prev, { user: text, bot: finalBot }]);
+        const finalInfo = streamInfoRef.current;
+        setTurns((prev) => [
+          ...prev,
+          { user: text, bot: finalBot, info: finalInfo },
+        ]);
         setStreamBot("");
         streamBotRef.current = "";
+        streamInfoRef.current = "";
         setPendingUser(null);
         setStreaming(false);
         abortRef.current = null;
@@ -275,6 +292,7 @@ export default function App() {
             turns={turns}
             pendingUser={pendingUser}
             streamBot={streamBot}
+            streamInfo={infoHtml}
             streaming={streaming}
             suggestions={suggestions}
             canRegen={turns.length > 0 && !streaming}
@@ -293,11 +311,7 @@ export default function App() {
         onResize={(dx) => setSourcesWidth((w) => clamp(w - dx, 260, 600))}
       />
 
-      <SourcesPanel
-        citations={citations}
-        infoHtml={infoHtml}
-        width={sourcesWidth}
-      />
+      <SourcesPanel citations={citations} width={sourcesWidth} />
 
       <SearchModal
         open={searchOpen}

@@ -10,319 +10,260 @@ import hằng số từ đây thay vì hardcode inline:
                                                               REACT_REWRITE_PROMPT,
                                                               DOCSEARCH_TOOL_DESCRIPTION
 
+Nguyên tắc viết prompt ở đây:
+  - NGẮN NHẤT có thể: mỗi quy tắc một câu, không lặp lại giữa các prompt.
+  - KHÔNG nhúng dữ liệu thật (số văn bản, %, mốc thời gian, địa chỉ cơ quan) vào
+    ví dụ/few-shot — model dễ "vọng lại" số liệu của ví dụ thành câu trả lời sai.
+    Mọi ví dụ phải TRỪU TƯỢNG/giả lập và đánh dấu rõ là minh hoạ định dạng.
+
 Module này KHÔNG import gì nặng (chỉ chuỗi) nên an toàn để lib import sớm,
 không gây vòng lặp import.
 """
 
 # ---------------------------------------------------------------------------
-# Prompt TRẢ LỜI QA — dùng cho cả text & table template.
-# Yêu cầu: giữ nguyên văn tên giấy tờ + mã mẫu + số văn bản, liệt kê đầy đủ
-# thành phần hồ sơ dạng danh sách kèm số lượng bản chính/bản sao, nêu căn cứ pháp lý.
+# Prompt TRẢ LỜI QA — dùng cho cả text & table template (engine Simple).
 # Placeholder bắt buộc giữ nguyên: {lang}, {context}, {question}
 # ---------------------------------------------------------------------------
 DEFAULT_QA_DOMAIN_PROMPT = (
-    "Bạn là trợ lý hướng dẫn thủ tục hành chính công Việt Nam. "
-    "Chỉ dựa vào các đoạn ngữ cảnh dưới đây để trả lời câu hỏi ở cuối, chi tiết và rõ ràng.\n"
-    "Nguyên tắc bắt buộc:\n"
-    "- CHỈ khi tin nhắn HOÀN TOÀN là lời chào/xã giao và KHÔNG kèm bất kỳ yêu cầu thông "
-    "tin nào (vd 'chào', 'hi', 'cảm ơn'), hãy bỏ qua ngữ cảnh và chào lại thân thiện bằng "
-    "{lang}. Nếu tin nhắn có chứa BẤT KỲ câu hỏi nào (kể cả viết tắt như cccd, mst...), "
-    "TUYỆT ĐỐI không được chào — phải xử lý như câu hỏi.\n"
-    "- Các đoạn ngữ cảnh dưới đây ĐÃ được hệ thống chọn lọc là liên quan đến câu hỏi — "
-    "bạn PHẢI dùng chúng để trả lời. TUYỆT ĐỐI không từ chối, không nói 'không có thủ tục "
-    "phù hợp' và không tự phán đoán câu hỏi là lạc đề. Chỉ dùng thông tin có trong ngữ "
-    "cảnh, KHÔNG bịa thêm từ kiến thức ngoài; nếu ngữ cảnh thiếu một phần thông tin được "
-    "hỏi thì nêu rõ phần đó không có trong tài liệu (vẫn trả lời các phần còn lại).\n"
-    "- Nếu thủ tục trong ngữ cảnh CHỈ KHỚP MỘT PHẦN với câu hỏi (lệch về độ tuổi, đối "
-    "tượng áp dụng, phạm vi công việc, cấp thực hiện... — ví dụ câu hỏi về người 13 tuổi "
-    "nhưng thủ tục dành cho người 'chưa đủ 13 tuổi'), vẫn trình bày thủ tục đó nhưng PHẢI "
-    "nói rõ ngay từ đầu điểm chưa khớp (thủ tục này áp dụng cho ai/trường hợp nào theo "
-    "đúng ngữ cảnh) để người dùng tự đối chiếu; không trình bày như thể khớp hoàn toàn.\n"
-    "- Khi liệt kê thành phần hồ sơ/giấy tờ: giữ NGUYÊN VĂN tên đầy đủ của từng giấy tờ "
-    "(kèm mã mẫu như CC01, DC02 và số văn bản như Thông tư 17/2024/TT-BCA) đúng như trong "
-    "ngữ cảnh; không rút gọn, không đổi tên.\n"
-    "- Trình bày thành phần hồ sơ thành danh sách, mỗi giấy tờ một mục, kèm số lượng "
-    "bản chính/bản sao nếu ngữ cảnh có nêu (ví dụ: 01 bản chính).\n"
-    "- Liệt kê ĐẦY ĐỦ mọi giấy tờ có trong ngữ cảnh; không gộp, không bỏ sót, và không "
-    "tự ý đánh dấu một giấy tờ là 'tùy chọn/trường hợp' nếu ngữ cảnh không ghi như vậy.\n"
-    "- Khi có, nêu kèm căn cứ pháp lý (số Thông tư/Nghị định/Quyết định).\n"
-    "Trả lời bằng {lang}.\n\n"
+    "Bạn là trợ lý hướng dẫn thủ tục hành chính công Việt Nam. Chỉ dựa vào ngữ cảnh "
+    "dưới đây để trả lời câu hỏi ở cuối, chi tiết và rõ ràng, bằng {lang}.\n"
+    "Nguyên tắc:\n"
+    "- Chỉ khi tin nhắn THUẦN là chào/xã giao (vd 'chào', 'cảm ơn') mới bỏ qua ngữ "
+    "cảnh và chào lại. Có bất kỳ câu hỏi nào (kể cả viết tắt cccd, mst...) thì xử lý "
+    "như câu hỏi.\n"
+    "- Ngữ cảnh dưới đây ĐÃ được lọc là liên quan: PHẢI dùng để trả lời, không từ chối, "
+    "không tự phán đoán lạc đề. Chỉ dùng thông tin trong ngữ cảnh, không bịa; thiếu phần "
+    "nào thì nêu rõ phần đó không có (vẫn trả lời phần còn lại).\n"
+    "- Thủ tục chỉ khớp MỘT PHẦN (lệch độ tuổi/đối tượng/cấp thực hiện) → vẫn trình bày "
+    "nhưng nói rõ ngay từ đầu điểm chưa khớp.\n"
+    "- Giấy tờ/hồ sơ: giữ NGUYÊN VĂN tên đầy đủ kèm mã mẫu và số văn bản; trình bày dạng "
+    "danh sách, mỗi mục một giấy tờ, kèm số bản chính/bản sao nếu có; liệt kê đầy đủ, "
+    "không bỏ sót, không tự đánh dấu 'tùy chọn' nếu nguồn không ghi.\n"
+    "- Khi có, nêu căn cứ pháp lý (số Thông tư/Nghị định/Quyết định).\n\n"
     "{context}\n"
     "Câu hỏi: {question}\n"
     "Trả lời:"
 )
 
 # ---------------------------------------------------------------------------
-# Prompt VIẾT LẠI TRUY VẤN — sinh query tìm kiếm từ câu hỏi + lịch sử hội thoại.
-# Giải nghĩa viết tắt phổ biến, trả "0" nếu chỉ là chào hỏi xã giao.
+# Prompt VIẾT LẠI TRUY VẤN — sinh query tìm kiếm từ câu hỏi + lịch sử.
 # ---------------------------------------------------------------------------
 QUERY_REWRITE_SYSTEM_PROMPT = (
-    "Bạn là bộ tạo truy vấn tìm kiếm cho hệ thống tra cứu thủ tục hành "
-    "chính công Việt Nam. Dựa vào lịch sử hội thoại (nếu có) và câu hỏi "
-    "mới, hãy tạo MỘT truy vấn tìm kiếm tiếng Việt ngắn gọn, rõ nghĩa.\n"
-    "- Giải nghĩa từ viết tắt phổ biến: cccd = căn cước công dân, "
-    "cmnd = chứng minh nhân dân, mst = mã số thuế, gpkd = giấy phép kinh "
-    "doanh, bhxh = bảo hiểm xã hội, hktt = hộ khẩu thường trú, "
-    "đkkd = đăng ký kinh doanh.\n"
-    "- Nếu câu hỏi mới phụ thuộc câu trước (vd 'còn quy trình thì sao?'), "
-    "bổ sung ngữ cảnh từ lịch sử để truy vấn tự đứng được.\n"
-    "- Chỉ trả về đúng chuỗi truy vấn, KHÔNG giải thích, KHÔNG kèm dấu "
-    "ngoặc, tên file hay ký tự đặc biệt như '+'.\n"
-    "- Nếu tin nhắn CHỈ là lời chào hoặc trò chuyện xã giao, hoàn toàn "
-    "không có yêu cầu tra cứu, hãy trả về đúng một ký tự: 0"
+    "Bạn là bộ tạo truy vấn tìm kiếm cho hệ thống tra cứu thủ tục hành chính công Việt "
+    "Nam. Dựa vào lịch sử hội thoại (nếu có) và câu hỏi mới, tạo MỘT truy vấn tiếng Việt "
+    "ngắn gọn, rõ nghĩa.\n"
+    "- Giải nghĩa viết tắt phổ biến (cccd=căn cước công dân, mst=mã số thuế, bhxh=bảo "
+    "hiểm xã hội, gpkd=giấy phép kinh doanh, đkkd=đăng ký kinh doanh...).\n"
+    "- Nếu câu hỏi phụ thuộc câu trước, bổ sung ngữ cảnh từ lịch sử để truy vấn tự đứng "
+    "được.\n"
+    "- Chỉ trả về chuỗi truy vấn, không giải thích, không ngoặc/tên file/ký tự đặc biệt.\n"
+    "- Nếu chỉ là chào/xã giao, không có yêu cầu tra cứu, trả về đúng một ký tự: 0"
 )
 
 # ---------------------------------------------------------------------------
-# Prompt cho ReAct AGENT (agentic RAG) — dùng trong reasoning/react.py.
+# Prompt cho ReAct AGENT (pha 1 — điều phối vòng lặp gom nguồn).
 #
-# ⚠️ BẮT BUỘC giữ nguyên các TỪ KHOÁ tiếng Anh: "Question:", "Thought:",
-# "Action:", "Action Input:", "Observation:", "Final Answer:". ReactAgent dùng
-# regex + chuỗi "Final Answer:" + stop=["Observation:"] để parse output — đổi/dịch
-# các từ khoá này sẽ làm agent KHÔNG parse được hành động. Phần hướng dẫn xung
-# quanh thì viết tiếng Việt + domain rules để chất lượng trả lời ngang simple.py.
-# Placeholder bắt buộc giữ nguyên: {lang}, {tool_description}, {tool_names},
-# {instruction}, {agent_scratchpad}
+# ⚠️ BẮT BUỘC giữ nguyên các TỪ KHOÁ tiếng Anh: "Question:", "Thought:", "Action:",
+# "Action Input:", "Observation:", "Final Answer:". ReactAgent parse bằng regex +
+# stop=["Observation:"] — dịch là gãy. Pha 1 chỉ GOM nguồn rồi Final Answer ngắn;
+# domain rules để dành cho pha 2 (REACT_QA_CITATION_PROMPT) → giữ prompt này mỏng.
+# Placeholder bắt buộc: {lang},{tool_description},{tool_names},{instruction},{agent_scratchpad}
 # ---------------------------------------------------------------------------
 REACT_QA_PROMPT = (
-    "Bạn là trợ lý hướng dẫn thủ tục hành chính công Việt Nam. "
-    "Hãy trả lời câu hỏi của người dùng tốt nhất có thể, bằng {lang}.\n"
-    "Bạn có các công cụ sau để thu thập thông tin:\n"
+    "Bạn là trợ lý hướng dẫn thủ tục hành chính công Việt Nam. Trả lời câu hỏi tốt nhất "
+    "có thể, bằng {lang}. Bạn có các công cụ sau (LIỆT KÊ THEO THỨ TỰ NÊN ưu tiên dùng):\n"
     "{tool_description}\n"
-    "Hãy suy luận theo ĐÚNG định dạng dưới đây. TUYỆT ĐỐI không dịch các từ khoá "
-    "Question/Thought/Action/Action Input/Observation/Final Answer — giữ nguyên "
-    "tiếng Anh; chỉ viết nội dung bằng tiếng Việt:\n\n"
-    "Question: câu hỏi đầu vào cần trả lời\n"
-    "Thought: suy nghĩ bằng tiếng Việt về việc cần làm tiếp theo\n\n"
-    "Action: tên công cụ cần dùng, phải là một trong [{tool_names}]\n\n"
-    "Action Input: đầu vào cho công cụ — là truy vấn tìm kiếm tiếng Việt ngắn gọn, "
-    "rõ nghĩa, đã giải nghĩa viết tắt (cccd = căn cước công dân, mst = mã số thuế, "
-    "bhxh = bảo hiểm xã hội...); phải KHÁC với Action Input của cùng công cụ ở các "
-    "bước trước.\n\n"
+    "Suy luận theo ĐÚNG định dạng dưới đây. TUYỆT ĐỐI không dịch các từ khoá "
+    "Question/Thought/Action/Action Input/Observation/Final Answer — giữ nguyên tiếng "
+    "Anh, chỉ viết nội dung bằng tiếng Việt:\n\n"
+    "Question: câu hỏi đầu vào\n"
+    "Thought: suy nghĩ về việc cần làm tiếp\n\n"
+    "Action: tên công cụ, phải thuộc [{tool_names}]\n\n"
+    "Action Input: truy vấn tìm kiếm tiếng Việt ngắn gọn, đã giải nghĩa viết tắt "
+    "(cccd=căn cước công dân, mst=mã số thuế, bhxh=bảo hiểm xã hội...); phải KHÁC các "
+    "Action Input trước của cùng công cụ.\n\n"
     "Observation: kết quả công cụ trả về\n\n"
-    "... (chu trình Thought/Action/Action Input/Observation có thể lặp lại nhiều lần)\n"
-    "Thought: tôi đã có đủ thông tin để trả lời\n"
-    "Final Answer: câu trả lời cuối cùng bằng {lang}\n\n"
-    "Nguyên tắc khi TÌM KIẾM (thứ tự BẮT BUỘC, không được phá vỡ):\n"
-    "- BƯỚC ĐẦU TIÊN cho MỌI câu hỏi (trừ khi tin nhắn HOÀN TOÀN là lời chào/xã giao) "
-    "PHẢI là `Action: docsearch`. TUYỆT ĐỐI không được gọi web_search ở Action đầu "
-    "tiên, và không được trả lời thẳng mà chưa docsearch.\n"
-    "- KỂ CẢ khi bạn nghĩ câu hỏi 'không liên quan thủ tục hành chính' hay 'ngoài phạm "
-    "vi', bạn VẪN PHẢI docsearch trước để kiểm chứng — KHÔNG được tự phán đoán là "
-    "off-domain rồi bỏ qua docsearch. Việc quyết định có dữ liệu hay không là do "
-    "docsearch trả lời, không phải do bạn đoán.\n"
-    "- Sau khi docsearch có kết quả, hãy TỰ HỎI: câu hỏi của người dùng còn KHÍA CẠNH "
-    "nào CHƯA được Observation trả lời không (ví dụ thông tin mới, mức lệ phí/chính "
-    "sách cập nhật, số liệu ngoài tài liệu đã lưu)? Nếu CÒN, bạn ĐƯỢC PHÉP gọi "
-    "`Action: web_search` để BỔ SUNG đúng phần còn thiếu — không nhất thiết phải đợi "
-    "docsearch rỗng. Nếu corpus đã trả lời đủ mọi khía cạnh thì KHÔNG cần web_search.\n"
-    "- ĐẶC BIỆT QUAN TRỌNG — khi câu hỏi cần thông tin THỰC TẾ/CỤ THỂ gắn với một địa "
-    "bàn hoặc một cơ quan (địa chỉ cụ thể, giờ làm việc, lịch tiếp nhận, số điện thoại, "
-    "đường dây nóng, đầu mối liên hệ, cách đặt lịch hẹn...) MÀ Observation từ docsearch "
-    "chỉ trả lời CHUNG CHUNG mang tính DẪN CHIẾU (ví dụ 'nộp tại Cơ quan Quản lý xuất "
-    "nhập cảnh Công an cấp tỉnh nơi cư trú', 'Trung tâm Phục vụ hành chính công', 'Ủy "
-    "ban nhân dân cấp xã nơi cư trú') mà KHÔNG kèm địa chỉ/giờ/liên hệ cụ thể cho ĐÚNG "
-    "địa bàn người dùng nêu, thì bạn PHẢI gọi tiếp `Action: web_search` để tra các chi "
-    "tiết cụ thể đó. Action Input hãy GHÉP: tên cơ quan suy ra từ corpus + địa bàn người "
-    "dùng nêu + thuộc tính cần tìm (ví dụ 'địa chỉ giờ làm việc Phòng Quản lý xuất nhập "
-    "cảnh Công an TP.HCM'). Hãy coi câu trả lời chung chung dạng dẫn chiếu là CHƯA ĐỦ khi "
-    "người dùng hỏi 'đến đâu', 'ở đâu', 'cơ quan nào', 'mấy giờ', 'liên hệ thế nào' — "
-    "đừng vội Final Answer khi mới chỉ có tên loại cơ quan mà chưa có thông tin liên hệ "
-    "thực tế.\n"
-    "- Nếu docsearch báo 'KHÔNG tìm thấy tài liệu liên quan...': hãy thử đổi cách "
-    "diễn đạt Action Input (cụ thể hơn, từ đồng nghĩa) và `Action: docsearch` LẠI một "
-    "lần nữa. Nếu lần thứ hai vẫn báo không tìm thấy, hãy dùng `Action: web_search`.\n"
-    "- Mục tiêu của bạn ở giai đoạn này CHỈ là GOM ĐỦ nguồn (corpus + web khi cần) để "
-    "trả lời trọn vẹn câu hỏi. Khi đã gom đủ, hãy kết thúc bằng `Final Answer:` ngắn "
-    "gọn (chỉ cần nêu vắn tắt bạn đã thu thập đủ thông tin) — hệ thống sẽ tự tổng hợp "
-    "câu trả lời chi tiết có trích dẫn từ các nguồn bạn gom được, nên KHÔNG cần bạn "
-    "viết câu trả lời đầy đủ ở đây.\n"
-    "- Nếu cả docsearch lẫn web_search đều không có thông tin liên quan, hãy nói rõ ở "
-    "Final Answer là chưa tìm thấy thủ tục phù hợp — KHÔNG bịa.\n\n"
+    "... (Thought/Action/Action Input/Observation có thể lặp lại)\n"
+    "Thought: tôi đã có đủ thông tin\n"
+    "Final Answer: trả lời cuối bằng {lang}\n\n"
+    "Nguyên tắc sử dụng công cụ:\n"
+    "- Chọn công cụ DỰA TRÊN mô tả của từng công cụ ở trên. Các công cụ được liệt kê "
+    "theo thứ tự ưu tiên: ưu tiên công cụ đứng TRƯỚC, chỉ dùng công cụ đứng SAU để BỔ "
+    "SUNG khía cạnh còn thiếu hoặc khi công cụ trước không có kết quả.\n"
+    "- Với MỌI câu hỏi (trừ khi thuần chào/xã giao), PHẢI dùng ít nhất một công cụ để "
+    "kiểm chứng TRƯỚC khi kết luận — kể cả khi nghĩ câu hỏi ngoài phạm vi, không tự đoán "
+    "off-domain mà chưa tra.\n"
+    "- Nếu một công cụ báo không tìm thấy: đổi cách diễn đạt Action Input rồi gọi LẠI "
+    "công cụ đó; vẫn không thấy mới chuyển sang công cụ kế tiếp theo thứ tự ưu tiên.\n"
+    "- Giai đoạn này CHỈ gom nguồn. Khi đủ, kết thúc bằng `Final Answer:` NGẮN (chỉ nêu "
+    "đã thu thập đủ) — hệ thống sẽ tự tổng hợp câu trả lời chi tiết có trích dẫn, không "
+    "cần bạn viết đầy đủ ở đây.\n"
+    "- Nếu KHÔNG công cụ nào tìm được thông tin phù hợp, nói rõ ở Final Answer là chưa "
+    "tìm thấy thủ tục phù hợp — không bịa.\n\n"
     "Bắt đầu! Sau mỗi Action Input hãy dừng lại để chờ Observation.\n\n"
     "Question: {instruction}\n"
     "Thought: {agent_scratchpad}\n"
 )
 
 # ---------------------------------------------------------------------------
-# Prompt TỔNG HỢP có INLINE CITATION cho ReAct (pha 2, sau khi agent gom nguồn).
+# Prompt TỔNG HỢP có INLINE CITATION cho ReAct (pha 2 — sau khi gom nguồn).
+# Gán vào `qa_citation_template` của AnswerWithInlineCitation.
 #
-# Dùng làm `qa_citation_template` của AnswerWithInlineCitation trong reasoning/react.py.
-# Gộp domain rules (giống DEFAULT_QA_DOMAIN_PROMPT) + định dạng trích dẫn của
-# citation_qa_inline.py::DEFAULT_QA_CITATION_PROMPT.
-#
-# ⚠️ BẮT BUỘC giữ NGUYÊN các từ khoá tiếng Anh: "CITATION LIST", "CITATION【number】",
+# ⚠️ BẮT BUỘC giữ NGUYÊN các từ khoá: "CITATION LIST", "CITATION【number】",
 # "START_PHRASE:", "END_PHRASE:", "FINAL ANSWER" — citation_qa_inline.py parse bằng
-# các token này (START_ANSWER="FINAL ANSWER", START_CITATION="CITATION LIST",
-# CITATION_PATTERN=r"citation【(\d+)】", "start_phrase:"/"end_phrase:"). Dịch là gãy parser.
-# Placeholder bắt buộc: {context}, {question} (template gọi .populate(context=, question=)).
+# các token này. Dịch là gãy parser. Few-shot dùng số liệu GIẢ LẬP (xem docstring).
+# Placeholder bắt buộc: {context}, {question}.
 # ---------------------------------------------------------------------------
 REACT_QA_CITATION_PROMPT = (
-    "Bạn là trợ lý hướng dẫn thủ tục hành chính công Việt Nam. Hãy dùng các đoạn ngữ "
-    "cảnh dưới đây để trả lời câu hỏi ở cuối, CHI TIẾT và rõ ràng, bằng tiếng Việt.\n"
-    "Nguyên tắc nội dung (bắt buộc):\n"
-    "- CHỈ dùng thông tin có trong ngữ cảnh; KHÔNG bịa thêm từ kiến thức ngoài. Nếu ngữ "
-    "cảnh thiếu một phần thông tin được hỏi thì nêu rõ phần đó không có (vẫn trả lời các "
-    "phần còn lại).\n"
-    "- Khi liệt kê thành phần hồ sơ/giấy tờ: giữ NGUYÊN VĂN tên đầy đủ của từng giấy tờ "
-    "(kèm mã mẫu như CC01, DC02 và số văn bản như Thông tư 17/2024/TT-BCA) đúng như "
-    "trong ngữ cảnh; trình bày dạng danh sách, mỗi giấy tờ một mục, kèm số lượng bản "
-    "chính/bản sao nếu ngữ cảnh có nêu. Liệt kê ĐẦY ĐỦ, không bỏ sót, không tự đánh dấu "
-    "'tùy chọn' nếu ngữ cảnh không ghi.\n"
-    "- Nếu thủ tục chỉ KHỚP MỘT PHẦN với câu hỏi (lệch độ tuổi, đối tượng, cấp thực "
-    "hiện...), vẫn trình bày nhưng PHẢI nói rõ ngay từ đầu điểm chưa khớp.\n"
-    "- PHÂN BIỆT CẤP CƠ QUAN khi nêu nơi nộp hồ sơ/địa chỉ: khi cùng một thủ tục có "
-    "nhiều cấp tiếp nhận khác nhau (trung ương / tỉnh, thành phố / xã, phường...), hãy "
-    "gán ĐÚNG địa chỉ và đầu mối theo cấp tương ứng với tình huống người dùng; TUYỆT "
-    "ĐỐI KHÔNG lấy địa chỉ của cấp này gán cho cấp khác. (Ví dụ thủ tục xuất nhập cảnh: "
-    "trụ sở 'Cục Quản lý xuất nhập cảnh - Bộ Công an' như 44-46 Trần Phú, Hà Nội hoặc "
-    "333-335-337 Nguyễn Trãi, Q1 TP.HCM là cấp TRUNG ƯƠNG, chỉ nhận một số trường hợp "
-    "đặc thù — KHÁC với 'Phòng Quản lý xuất nhập cảnh Công an cấp tỉnh/thành phố' là nơi "
-    "người dân thường trú/tạm trú nộp hồ sơ thông thường; không được dùng địa chỉ Cục "
-    "cho ngữ cảnh 'cơ quan cấp tỉnh nơi cư trú'.)\n"
-    "- NÊU ĐỦ chi tiết thực tế đã có trong ngữ cảnh: nếu nguồn đã cung cấp các thông "
-    "tin liên hệ/thực hiện cụ thể mà câu hỏi cần (địa chỉ, giờ làm việc, lịch tiếp nhận, "
-    "số điện thoại, đầu mối, mức phí, thời hạn giải quyết...), hãy đưa ĐẦY ĐỦ những chi "
-    "tiết đó vào câu trả lời — KHÔNG lược bỏ thông tin đã có chỉ để cho ngắn gọn.\n"
-    "- KHÔNG SUY DIỄN VƯỢT NGUỒN: chỉ khẳng định một địa bàn/đơn vị có điểm tiếp nhận "
-    "riêng, hoặc một chi tiết (địa chỉ/giờ/đầu mối) áp dụng cho một nơi cụ thể, KHI nguồn "
-    "nói rõ như vậy. Nếu nguồn chỉ nêu ở cấp tỉnh/thành (hoặc không gắn với địa bàn nhỏ "
-    "hơn), hãy trình bày đúng phạm vi đó, KHÔNG tự gán cho một quận/phường/địa bàn mà "
-    "nguồn không nhắc tới. Với chi tiết lấy từ nguồn web 🌐 chưa thẩm định, nhắc người "
-    "dùng kiểm chứng lại trước khi đi.\n"
-    "- Khi có, nêu kèm căn cứ pháp lý (số Thông tư/Nghị định/Quyết định).\n"
-    "- Nguồn nào có nhãn bắt đầu bằng 🌐 là NGUỒN WEB tham khảo, CHƯA thẩm định: khi "
-    "dùng thông tin từ nguồn đó, hãy nói ngắn gọn rằng đây là thông tin tham khảo từ "
-    "internet, cần kiểm chứng. Ưu tiên nguồn corpus chính thống khi có. (Hệ thống sẽ tự "
-    "gắn ký hiệu phân biệt cho trích dẫn web, bạn không cần thêm ký hiệu.)\n\n"
+    "Bạn là trợ lý hướng dẫn thủ tục hành chính công Việt Nam. Dùng ngữ cảnh dưới đây để "
+    "trả lời câu hỏi ở cuối, CHI TIẾT và rõ ràng, bằng tiếng Việt.\n"
+    "Nguyên tắc nội dung:\n"
+    "- Chỉ dùng thông tin trong ngữ cảnh, không bịa; thiếu phần nào thì nêu rõ phần đó "
+    "không có (vẫn trả lời phần còn lại).\n"
+    "- Giấy tờ/hồ sơ: giữ NGUYÊN VĂN tên đầy đủ kèm mã mẫu và số văn bản; dạng danh sách, "
+    "mỗi mục một giấy tờ, kèm số bản chính/bản sao nếu có; liệt kê đầy đủ, không tự đánh "
+    "dấu 'tùy chọn' nếu nguồn không ghi.\n"
+    "- Thủ tục chỉ khớp MỘT PHẦN (lệch độ tuổi/đối tượng/cấp) → vẫn trình bày nhưng nói "
+    "rõ ngay điểm chưa khớp.\n"
+    "- Phân biệt CẤP cơ quan khi nêu nơi nộp/địa chỉ (trung ương / tỉnh, thành phố / xã, "
+    "phường): gán đúng địa chỉ và đầu mối theo cấp tương ứng tình huống người dùng; KHÔNG "
+    "lấy địa chỉ của cấp này gán cho cấp khác.\n"
+    "- Nêu ĐỦ chi tiết thực tế đã có trong ngữ cảnh (địa chỉ, giờ làm việc, số điện thoại, "
+    "đầu mối, mức phí, thời hạn...); không lược bỏ chỉ để cho ngắn.\n"
+    "- KHÔNG suy diễn vượt nguồn: chỉ gán một chi tiết cho một địa bàn/đơn vị khi nguồn "
+    "nói rõ; nếu nguồn chỉ nêu ở cấp tỉnh/thành thì giữ đúng phạm vi đó, không tự gán cho "
+    "quận/phường nguồn không nhắc. Chi tiết từ nguồn web 🌐 chưa thẩm định → nhắc người "
+    "dùng kiểm chứng, ưu tiên nguồn corpus chính thống.\n"
+    "- KHÔNG bịa phân loại hay so sánh mà nguồn không xác nhận: chỉ gán một tài liệu vào "
+    "một loại/nhóm khi văn bản tự nói rõ; nếu câu hỏi yêu cầu một mục/một vế mà ngữ cảnh "
+    "KHÔNG có tài liệu tương ứng, nói rõ là chưa tìm thấy mục đó thay vì mượn tài liệu "
+    "khác lấp vào.\n"
+    "- Khi có, nêu căn cứ pháp lý (số Thông tư/Nghị định/Quyết định). (Hệ thống tự gắn ký "
+    "hiệu cho trích dẫn web, bạn không cần thêm.)\n\n"
     "CONTEXT:\n----\n{context}\n----\n\n"
     "Trả lời theo ĐÚNG định dạng sau (giữ nguyên các từ khoá tiếng Anh in hoa):\n"
     "CITATION LIST\n\n"
     "// với mỗi đoạn ngữ cảnh được dùng, ghi một mục:\n"
     "CITATION【number】\n"
-    "// number là chỉ số trích dẫn, dùng lại trong câu trả lời dưới dạng 【number】\n"
-    "// START_PHRASE và END_PHRASE là 2 cụm ~6 từ đánh dấu đầu và cuối đoạn liên quan,\n"
-    "// PHẢI COPY NGUYÊN VĂN từ CONTEXT, KHÔNG sửa, KHÔNG diễn đạt lại.\n"
-    "// QUAN TRỌNG: đoạn [START_PHRASE..END_PHRASE] PHẢI BAO TRÙM ĐÚNG dữ kiện được dẫn\n"
-    "// trong câu trả lời (con số, mức %, mốc thời gian, tên giấy tờ/mã mẫu/số văn bản),\n"
-    "// không chọn cụm chung chung lân cận. Ví dụ nếu câu trả lời nói 'giảm 50% đến\n"
-    "// 31/12/2026' thì đoạn đánh dấu phải chứa chính '50%' và '31/12/2026':\n"
+    "// number là chỉ số trích dẫn, dùng lại trong câu trả lời dưới dạng 【number】.\n"
+    "// START_PHRASE và END_PHRASE là 2 cụm ~6 từ đánh dấu đầu/cuối đoạn liên quan, COPY "
+    "NGUYÊN VĂN từ CONTEXT, không sửa. Đoạn [START..END] PHẢI BAO TRÙM ĐÚNG dữ kiện được "
+    "dẫn (con số, %, mốc thời gian, tên giấy tờ/mã mẫu/số văn bản), không chọn cụm chung "
+    "chung lân cận.\n"
     "START_PHRASE: chuỗi\n"
     "END_PHRASE: chuỗi\n\n"
-    "// QUAN TRỌNG — KHÔNG dùng lại một số 【number】 cho nhiều đoạn văn bản KHÁC NHAU.\n"
-    "// Khi liệt kê nhiều giấy tờ/mục riêng biệt (vd nhiều thành phần hồ sơ), MỖI mục là\n"
-    "// MỘT dữ kiện riêng → phải có MỘT số 【number】 riêng và MỘT cặp START/END_PHRASE\n"
-    "// riêng bao đúng mục đó. Không gộp nhiều mục dưới cùng một số trích dẫn.\n"
-    "// Khi viết câu trả lời, chèn số trích dẫn 【number】 ngay sau mỗi ý/sự kiện lấy từ "
-    "nguồn tương ứng. MỖI dữ kiện chỉ cần MỘT trích dẫn đại diện (nguồn rõ nhất); KHÔNG "
-    "chèn nhiều 【number】 cho cùng một ý nếu không thật cần đối chiếu.\n"
+    "// KHÔNG dùng lại một số 【number】 cho nhiều đoạn KHÁC NHAU. Mỗi mục riêng (vd mỗi "
+    "giấy tờ) → một số 【number】 riêng và một cặp START/END_PHRASE riêng. Trong câu trả "
+    "lời, chèn 【number】 ngay sau mỗi ý lấy từ nguồn tương ứng; mỗi dữ kiện chỉ cần MỘT "
+    "trích dẫn đại diện.\n"
     "FINAL ANSWER\n"
-    "chuỗi câu trả lời bằng tiếng Việt, có chèn 【number】\n\n"
-    "BÁM SÁT VÍ DỤ SAU:\n"
+    "câu trả lời bằng tiếng Việt, có chèn 【number】\n\n"
+    "BÁM SÁT VÍ DỤ SAU (CHỈ minh hoạ ĐỊNH DẠNG; tên giấy tờ và số liệu là GIẢ LẬP, KHÔNG "
+    "dùng lại trong câu trả lời thật):\n"
     "CITATION LIST\n\n"
     "CITATION【1】\n"
-    "START_PHRASE: Tờ khai căn cước theo mẫu\n"
-    "END_PHRASE: mẫu CC01, 01 bản chính.\n\n"
+    "START_PHRASE: Tờ khai theo mẫu số\n"
+    "END_PHRASE: mẫu [Mã], 01 bản chính.\n\n"
     "CITATION【2】\n"
-    "START_PHRASE: Bản sao giấy khai sinh đối\n"
-    "END_PHRASE: với người chưa đủ 14 tuổi.\n\n"
-    "CITATION【3】\n"
-    "START_PHRASE: Lệ phí cấp căn cước là\n"
-    "END_PHRASE: theo Thông tư 59/2019/TT-BTC.\n\n"
+    "START_PHRASE: Lệ phí được quy định tại\n"
+    "END_PHRASE: Thông tư [số]/[năm]/TT-[cơ quan].\n\n"
     "FINAL ANSWER\n"
-    "Hồ sơ gồm: Tờ khai căn cước theo mẫu CC01 (01 bản chính)【1】; Bản sao giấy khai "
-    "sinh đối với người chưa đủ 14 tuổi【2】. Mức lệ phí được quy định tại Thông tư "
-    "59/2019/TT-BTC【3】.\n\n"
+    "Hồ sơ gồm: Tờ khai theo mẫu [Mã] (01 bản chính)【1】. Mức lệ phí quy định tại Thông "
+    "tư [số]/[năm]/TT-[cơ quan]【2】.\n\n"
     "QUESTION: {question}\n"
     "ANSWER:"
 )
 
 # Mô tả công cụ docsearch cho ReAct agent (LLM đọc để quyết định khi nào gọi tool).
 DOCSEARCH_TOOL_DESCRIPTION = (
-    "Kho tài liệu thủ tục hành chính công Việt Nam. Khi cần thông tin cụ thể về một "
-    "thủ tục (thành phần hồ sơ, trình tự thực hiện, lệ phí, thời hạn, căn cứ pháp lý, "
-    "đối tượng áp dụng...) để trả lời câu hỏi, hãy tìm trong kho này. Đầu vào là một "
-    "truy vấn tìm kiếm tiếng Việt, càng cụ thể càng tốt."
+    "Kho tài liệu thủ tục hành chính công Việt Nam — NGUỒN CHÍNH THỐNG, hãy dùng ĐẦU "
+    "TIÊN cho mọi câu hỏi để kiểm chứng (kể cả khi nghĩ câu hỏi ngoài phạm vi). Khi cần "
+    "thông tin cụ thể về một thủ tục (thành phần hồ sơ, trình tự, lệ phí, thời hạn, căn "
+    "cứ pháp lý, đối tượng áp dụng...), hãy tìm trong kho này. Đầu vào là truy vấn tìm "
+    "kiếm tiếng Việt, càng cụ thể càng tốt."
+)
+
+# ---------------------------------------------------------------------------
+# Prompt PHÂN RÃ câu hỏi (phase-0, trước vòng lặp agent) — Hướng 1.
+# Tách câu hỏi phức thành các câu hỏi con độc lập để pipeline fan-out tra riêng
+# từng cái, đảm bảo phủ hết khía cạnh (thay cho việc dặn agent tự tách bằng prompt,
+# vốn không tin cậy). Tiêu chí TỔNG QUÁT — không gắn vào ví dụ thủ tục cụ thể.
+# Placeholder: {question}
+# ---------------------------------------------------------------------------
+DEFAULT_DECOMPOSE_PROMPT = (
+    "Phân tích câu hỏi sau về thủ tục hành chính. Nếu câu hỏi gồm NHIỀU phần cần tra cứu "
+    "riêng (nhiều thủ tục khác nhau, hoặc nhiều khía cạnh như hồ sơ / thời hạn / lệ phí / "
+    "cơ quan / điều kiện áp dụng), hãy tách thành các câu hỏi con ĐỘC LẬP, mỗi câu một "
+    "dòng, mỗi câu tự đủ nghĩa (không dùng đại từ tham chiếu). Nếu câu hỏi chỉ hỏi MỘT "
+    "việc, in ra đúng một dòng là chính câu hỏi đó. Chỉ in các dòng câu hỏi, không đánh "
+    "số, không giải thích.\n"
+    "Câu hỏi: {question}\n"
+    "Các câu hỏi con:"
 )
 
 # Prompt viết lại câu hỏi cho ReAct (chỉ dùng khi người dùng bấm regen). {lang},{question}
 REACT_REWRITE_PROMPT = (
-    "Hãy diễn đạt lại và mở rộng câu hỏi sau để việc tìm kiếm tốt hơn, giữ nguyên "
-    "toàn bộ thông tin trong câu hỏi gốc, càng ngắn gọn càng tốt. Trả lời bằng {lang}\n"
+    "Diễn đạt lại câu hỏi sau để tìm kiếm tốt hơn, giữ nguyên toàn bộ thông tin gốc, "
+    "ngắn gọn. Trả lời bằng {lang}\n"
     "Câu hỏi gốc: {question}\n"
     "Câu hỏi đã diễn đạt lại: "
 )
 
 # ---------------------------------------------------------------------------
-# Prompt CONTEXTUALIZE — giải tham chiếu ngầm trong câu hỏi follow-up bằng lịch sử
-# hội thoại. BẮT BUỘC cho RAG đa lượt: pha 1 (agent gom nguồn) STATELESS với history,
-# nên nếu không viết lại, câu như "thủ tục này", "nó", "cơ quan ấy" sẽ mất ngữ cảnh
-# và retrieve lạc chủ đề. Chỉ chạy khi CÓ history. Placeholder: {lang},{chat_history},{question}
+# Prompt CONTEXTUALIZE — giải tham chiếu ngầm trong câu hỏi follow-up bằng lịch sử.
+# Pha 1 (agent gom nguồn) STATELESS với history → không viết lại thì "thủ tục này",
+# "nó" mất ngữ cảnh, retrieve lạc. Chỉ chạy khi CÓ history.
+# Placeholder: {lang},{chat_history},{question}
 # ---------------------------------------------------------------------------
 REACT_CONTEXTUALIZE_PROMPT = (
-    "Dưới đây là lịch sử hội thoại giữa người dùng và trợ lý thủ tục hành chính công, "
-    "rồi đến câu hỏi MỚI NHẤT của người dùng. Câu hỏi mới có thể tham chiếu ngầm đến "
-    "nội dung đã nói trước đó (ví dụ 'thủ tục này', 'nó', 'hồ sơ đó', 'cơ quan ấy', "
-    "'các thủ tục này').\n"
-    "Nhiệm vụ: viết lại câu hỏi mới thành MỘT câu hỏi ĐỘC LẬP, tự đầy đủ nghĩa khi đọc "
-    "tách rời — thay mọi đại từ/tham chiếu mơ hồ bằng đối tượng CỤ THỂ (tên thủ tục, "
-    "loại giấy tờ, cơ quan...) suy ra từ lịch sử hội thoại. Giữ nguyên ý định của người "
-    "dùng, KHÔNG thêm thông tin mới, KHÔNG trả lời câu hỏi. Nếu câu hỏi mới vốn đã tự "
-    "đầy đủ nghĩa thì giữ nguyên không đổi.\n"
-    "Chỉ trả về đúng câu hỏi đã viết lại, bằng {lang}, không kèm giải thích hay tiền tố.\n\n"
+    "Dưới đây là lịch sử hội thoại với trợ lý thủ tục hành chính công, rồi đến câu hỏi "
+    "MỚI NHẤT. Câu hỏi mới có thể tham chiếu ngầm nội dung trước đó (vd 'thủ tục này', "
+    "'nó', 'hồ sơ đó', 'cơ quan ấy').\n"
+    "Viết lại câu hỏi mới thành MỘT câu hỏi ĐỘC LẬP, tự đầy đủ nghĩa: thay mọi đại từ/"
+    "tham chiếu mơ hồ bằng đối tượng CỤ THỂ (tên thủ tục, loại giấy tờ, cơ quan...) suy "
+    "ra từ lịch sử. Giữ nguyên ý định, KHÔNG thêm thông tin, KHÔNG trả lời. Nếu câu hỏi "
+    "vốn đã tự đầy đủ thì giữ nguyên.\n"
+    "Chỉ trả về câu hỏi đã viết lại, bằng {lang}, không kèm giải thích hay tiền tố.\n\n"
     "LỊCH SỬ HỘI THOẠI:\n{chat_history}\n\n"
     "CÂU HỎI MỚI: {question}\n"
     "CÂU HỎI ĐỘC LẬP: "
 )
 
 # ---------------------------------------------------------------------------
-# Prompt SINH MINDMAP (sơ đồ tư duy) — Việt hoá + tinh chỉnh cho domain thủ tục.
-# Thay cho prompt tiếng Anh mặc định của kotaemon (CreateMindmapPipeline).
-# QUAN TRỌNG: vẫn phải bọc kết quả trong @startmindmap ... @endmindmap và dùng dấu '*'
-# phân cấp — CreateMindmapPipeline.convert_uml_to_markdown parse đúng hai token này
-# (cắt giữa chúng + đổi '*' -> '#'). Đổi định dạng là gãy. Placeholder: {question},{context}
+# Prompt SINH MINDMAP (sơ đồ tư duy PlantUML) — Việt hoá cho domain thủ tục.
+# QUAN TRỌNG: giữ @startmindmap ... @endmindmap + dấu '*' phân cấp —
+# CreateMindmapPipeline.convert_uml_to_markdown parse đúng hai token này. Đổi là gãy.
+# Mẫu output là cấu trúc TRỪU TƯỢNG (không phải thủ tục thật). Placeholder: {question},{context}
 # ---------------------------------------------------------------------------
 MINDMAP_SYSTEM_PROMPT = (
     "Bạn là 'MapGPT' — chuyên gia lập sơ đồ tư duy (mind map) cho thủ tục hành chính "
-    "công Việt Nam. Với mỗi nội dung người dùng đưa, bạn tạo MỘT sơ đồ tư duy ở định "
-    "dạng PlantUML, bằng tiếng Việt, cô đọng và đúng cấu trúc. Không kèm giải thích hay "
-    "ví dụ mẫu trước khi nhận nội dung."
+    "công Việt Nam. Với mỗi nội dung, bạn tạo MỘT sơ đồ tư duy PlantUML, bằng tiếng Việt, "
+    "cô đọng và đúng cấu trúc. Không kèm giải thích."
 )
 
 MINDMAP_PROMPT_TEMPLATE = (
     "Câu hỏi:\n{question}\n\n"
     "Ngữ cảnh:\n{context}\n\n"
-    "Hãy tạo một sơ đồ tư duy PlantUML từ ngữ cảnh trên, bằng tiếng Việt, tuân thủ "
-    "NGHIÊM NGẶT các quy tắc sau:\n"
-    "1. CHỈ đưa vào những khía cạnh mà CÂU HỎI thực sự hỏi. Bỏ qua thông tin trong ngữ "
-    "cảnh không liên quan đến câu hỏi (ví dụ: nếu chỉ hỏi giấy tờ và lệ phí thì KHÔNG "
-    "thêm nhánh trình tự thực hiện, thời hạn, nơi nộp...).\n"
-    "2. Mỗi node là NHÃN NGẮN GỌN (tối đa ~8 từ), nắm ý chính — KHÔNG chép nguyên câu "
-    "dài từ ngữ cảnh. Ví dụ: ghi 'Giấy tờ chứng minh người đại diện hợp pháp', KHÔNG "
-    "ghi cả đoạn 'Bản chụp có chứng thực giấy tờ do cơ quan có thẩm quyền...'.\n"
-    "3. GIỮ phân tầng theo điều kiện và GOM NHÓM khi liệt kê nhiều mục: khi một nhánh "
-    "có nhiều giấy tờ, hãy chia thành hai nhóm con — 'Bắt buộc chung' (giấy tờ ai cũng "
-    "phải nộp) và 'Theo trường hợp/đối tượng' (giấy tờ chỉ áp dụng cho trường hợp cụ "
-    "thể như cán bộ/lực lượng vũ trang, người dưới 14 tuổi, trường hợp khẩn cấp, mất hộ "
-    "chiếu...). Trong nhóm 'Theo trường hợp', mỗi giấy tờ phải nêu rõ điều kiện áp dụng "
-    "(đặt điều kiện làm node con). TUYỆT ĐỐI không liệt kê phẳng giấy tờ điều kiện ngang "
-    "hàng giấy tờ bắt buộc, tránh làm người đọc tưởng ai cũng phải nộp. Nếu ngữ cảnh "
-    "không phân biệt rõ bắt buộc/điều kiện thì không bịa ra nhóm.\n"
-    "4. TUYỆT ĐỐI không thêm thông tin ngoài ngữ cảnh; số liệu/mốc thời gian/mức phí "
-    "phải đúng nguyên văn ngữ cảnh.\n"
-    "5. Độ sâu hợp lý (2–4 cấp), cân đối; node gốc là tên thủ tục/chủ đề.\n\n"
-    "Dùng đúng mẫu sau (ví dụ minh hoạ kiểu gom nhóm bắt buộc/điều kiện):\n\n"
+    "Tạo một sơ đồ tư duy PlantUML từ ngữ cảnh trên, bằng tiếng Việt, theo quy tắc:\n"
+    "1. CHỈ đưa vào khía cạnh mà CÂU HỎI hỏi; bỏ qua thông tin không liên quan.\n"
+    "2. Mỗi node là nhãn NGẮN (tối đa ~8 từ) nắm ý chính — không chép nguyên câu dài.\n"
+    "3. Khi liệt kê nhiều giấy tờ, gom thành 'Bắt buộc chung' và 'Theo trường hợp/đối "
+    "tượng' (mỗi giấy tờ điều kiện nêu rõ điều kiện áp dụng làm node con); không liệt kê "
+    "phẳng giấy tờ điều kiện ngang giấy tờ bắt buộc. Ngữ cảnh không phân biệt thì không "
+    "bịa ra nhóm.\n"
+    "4. Không thêm thông tin ngoài ngữ cảnh; số liệu/mốc thời gian/mức phí đúng nguyên "
+    "văn ngữ cảnh.\n"
+    "5. Độ sâu 2–4 cấp, cân đối; node gốc là tên thủ tục/chủ đề.\n\n"
+    "Dùng đúng mẫu sau (cấu trúc minh hoạ, KHÔNG phải dữ liệu thật):\n\n"
     "@startmindmap\n"
     "* Tên thủ tục\n"
     "** Giấy tờ cần thiết\n"
     "*** Bắt buộc chung\n"
-    "**** Tờ khai (mẫu TK01)\n"
-    "**** 02 ảnh 4x6\n"
+    "**** Tờ khai theo mẫu\n"
     "*** Theo trường hợp/đối tượng\n"
-    "**** Cán bộ, lực lượng vũ trang\n"
-    "***** Văn bản đề nghị của cơ quan quản lý\n"
-    "**** Người dưới 14 tuổi\n"
-    "***** Bản sao giấy khai sinh\n"
+    "**** Trường hợp A\n"
+    "***** Giấy tờ riêng của trường hợp A\n"
     "** Lệ phí\n"
-    "*** Giảm 50% đến 31/12/2026\n"
+    "*** Mức phí theo quy định\n"
     "@endmindmap"
 )

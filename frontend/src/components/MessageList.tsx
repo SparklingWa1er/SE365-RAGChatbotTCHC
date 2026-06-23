@@ -2,6 +2,9 @@ import { useEffect, useMemo } from "react";
 import { Landmark } from "lucide-react";
 import type { Turn } from "../App";
 import { mdToHtml } from "../lib/markdown";
+import { extractReasoning } from "../lib/reasoning";
+import Mindmap from "./Mindmap";
+import ReasoningBlock from "./ReasoningBlock";
 import SafeHtml from "./SafeHtml";
 import {
   Conversation,
@@ -16,6 +19,7 @@ interface Props {
   turns: Turn[];
   pendingUser: string | null; // câu hỏi lượt đang stream
   streamBot: string; // HTML bot tích luỹ của lượt đang stream
+  streamInfo: string; // HTML suy luận tích luỹ của lượt đang stream
   streaming: boolean;
   scrollTarget: string | null; // "<turnIndex>-user" | "<turnIndex>-bot" (từ Search Modal)
   onScrolled: () => void;
@@ -26,6 +30,7 @@ export default function MessageList({
   turns,
   pendingUser,
   streamBot,
+  streamInfo,
   streaming,
   scrollTarget,
   onScrolled,
@@ -62,14 +67,21 @@ export default function MessageList({
         ) : (
           <>
             {turns.map((t, i) => (
-              <Exchange key={i} index={i} user={t.user} bot={t.bot} />
+              <Exchange
+                key={i}
+                index={i}
+                user={t.user}
+                bot={t.bot}
+                info={t.info ?? ""}
+              />
             ))}
             {pendingUser !== null && (
               <Exchange
                 index={turns.length}
                 user={pendingUser}
                 bot={streamBot}
-                streaming={streaming && !streamBot}
+                info={streamInfo}
+                streaming={streaming}
               />
             )}
           </>
@@ -84,15 +96,26 @@ function Exchange({
   index,
   user,
   bot,
+  info,
   streaming,
 }: {
   index: number;
   user: string;
   bot: string;
+  info: string;
   streaming?: boolean;
 }) {
   // Câu trả lời bot là markdown (có HTML citation inline) — dịch sang HTML rồi mới sanitize.
   const botHtml = useMemo(() => mdToHtml(bot), [bot]);
+  // Tách phần suy luận (Thought/Action) khỏi mindmap để đặt đúng vị trí:
+  // dropdown suy luận TRÊN bong bóng, sơ đồ tư duy DƯỚI câu trả lời.
+  const { reasoningHtml, mindmaps } = useMemo(
+    () => extractReasoning(info),
+    [info],
+  );
+  const isStreaming = !!streaming;
+  const waiting = isStreaming && !bot; // đang suy luận, chưa có câu trả lời
+
   return (
     <>
       <Message from="user" id={`msg-${index}-user`} className="scroll-mt-4">
@@ -102,11 +125,26 @@ function Exchange({
       </Message>
       <Message from="assistant" id={`msg-${index}-bot`} className="scroll-mt-4">
         <MessageContent>
-          {streaming ? (
-            <Shimmer>Đang trả lời…</Shimmer>
-          ) : (
+          <ReasoningBlock html={reasoningHtml} streaming={isStreaming} />
+          {bot ? (
             <SafeHtml className="prose prose-sm max-w-none" html={botHtml} />
+          ) : (
+            // Chưa có câu trả lời: nếu dropdown suy luận đang chạy thì nó đã báo
+            // tiến trình ("Đang suy luận…"), khỏi cần shimmer thứ hai. Chỉ hiện
+            // "Đang trả lời…" khi chưa có bước suy luận nào (vd engine không phát info).
+            waiting && !reasoningHtml && <Shimmer>Đang trả lời…</Shimmer>
           )}
+          {mindmaps.map((md, i) => (
+            <div
+              key={i}
+              className="mt-3 overflow-hidden rounded-md border border-border"
+            >
+              <div className="border-b border-border bg-muted px-2 py-1 text-xs font-medium text-muted-foreground">
+                Sơ đồ tư duy
+              </div>
+              <Mindmap markdown={md} />
+            </div>
+          ))}
         </MessageContent>
       </Message>
     </>
