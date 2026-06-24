@@ -14,6 +14,7 @@ export interface ConversationDetail {
   chat_suggestions: string[][]; // [["câu 1"], ["câu 2"], ...]
   selected: Record<string, unknown>;
   reasoning?: string[]; // HTML suy luận theo từng lượt (khớp 1-1 với messages)
+  citations?: Citation[][]; // nguồn theo từng lượt (khớp 1-1 với messages)
 }
 
 export interface Citation {
@@ -54,6 +55,7 @@ export type SseEvent =
       conversation_id: string;
       suggestions: string[][];
       cancelled?: boolean;
+      name?: string; // tên hội thoại (đã tự đặt ở lượt đầu) — cập nhật topbar ngay
     };
 
 // Handler do UI cung cấp; mọi event answer/info đều là TRẠNG THÁI ĐẦY ĐỦ (ghi đè).
@@ -67,6 +69,7 @@ export interface StreamHandlers {
     conversation_id: string;
     suggestions: string[][];
     cancelled?: boolean;
+    name?: string;
   }) => void;
   onConversationId?: (id: string) => void; // từ header X-Conversation-Id
 }

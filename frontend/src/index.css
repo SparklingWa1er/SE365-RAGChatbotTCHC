@@ -238,17 +238,46 @@
   margin: 1em 0;
 }
 
-/* Link trích dẫn 【n】 do backend chèn vào answer. */
+/* Link trích dẫn 【n】 do backend chèn vào answer — dạng "chip" bấm được. */
 .prose a.citation {
-  display: inline-block;
-  font-size: 0.7rem;
-  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 1.15rem;
+  height: 1.15rem;
+  margin: 0 0.05rem;
+  padding: 0 0.25rem;
+  font-size: 0.66rem;
+  font-weight: 700;
+  line-height: 1;
   color: var(--color-primary);
+  background: var(--color-secondary);
+  border: 1px solid color-mix(in oklch, var(--color-primary) 25%, transparent);
+  border-radius: 0.5rem;
   text-decoration: none;
   vertical-align: super;
+  cursor: pointer;
+  transition: background-color 0.12s, color 0.12s, transform 0.12s;
 }
 .prose a.citation:hover {
-  text-decoration: underline;
+  background: var(--color-primary);
+  color: var(--color-primary-foreground);
+  transform: translateY(-1px);
+}
+
+/* Nguồn vừa được dẫn chiếu (bấm 【n】) — viền nhấp nháy để dễ nhận ra. */
+@keyframes citeFlash {
+  0% {
+    box-shadow: 0 0 0 0 color-mix(in oklch, var(--color-primary) 55%, transparent);
+    border-color: var(--color-primary);
+  }
+  100% {
+    box-shadow: 0 0 0 6px transparent;
+    border-color: var(--color-border);
+  }
+}
+.cite-flash {
+  animation: citeFlash 1.4s ease-out;
 }
 
 /* Panel info (Thought/Action + nguồn tô sáng). */
@@ -261,4 +290,58 @@
 }
 .info-html summary {
   cursor: pointer;
+}
+
+/* ── Các bước suy luận của agent (ReAct) — dạng thẻ có "tên bước" ─────────── */
+.info-html details.evidence {
+  margin: 0.4rem 0;
+  border: 1px solid var(--color-border);
+  border-left: 3px solid color-mix(in oklch, var(--color-primary) 45%, transparent);
+  border-radius: 0.6rem;
+  background: var(--color-card);
+  overflow: hidden;
+}
+.info-html details.evidence > summary {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.5rem 0.7rem;
+  font-size: 0.8rem;
+  list-style: none;
+  user-select: none;
+  transition: background-color 0.12s;
+}
+.info-html details.evidence > summary::-webkit-details-marker {
+  display: none;
+}
+/* Chevron xoay khi mở. */
+.info-html details.evidence > summary::before {
+  content: "";
+  width: 0.5rem;
+  height: 0.5rem;
+  flex-shrink: 0;
+  border-right: 2px solid var(--color-muted-foreground);
+  border-bottom: 2px solid var(--color-muted-foreground);
+  transform: rotate(-45deg);
+  transition: transform 0.15s;
+}
+.info-html details.evidence[open] > summary::before {
+  transform: rotate(45deg);
+}
+.info-html details.evidence > summary:hover {
+  background: var(--color-muted);
+}
+.info-html details.evidence > summary b {
+  color: var(--color-primary);
+  font-weight: 700;
+}
+/* Nội dung bước (Thought/Action/Output) — thụt vào, nền nhạt. */
+.info-html details.evidence > *:not(summary) {
+  padding: 0 0.7rem;
+}
+.info-html details.evidence > summary + * {
+  padding-top: 0.5rem;
+}
+.info-html details.evidence > :last-child {
+  padding-bottom: 0.6rem;
 }

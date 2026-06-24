@@ -1,0 +1,599 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Hướng dẫn cài đặt · Chatbot RAG Thủ tục hành chính công</title>
+<meta name="description" content="Hướng dẫn cài đặt và chạy chatbot RAG hỏi–đáp thủ tục hành chính công Việt Nam (kotaemon + Azure OpenAI + React)." />
+<link rel="icon" type="image/svg+xml" href="favicon.svg" />
+<style>
+  :root {
+    --brand: #1668c9;
+    --brand-2: #3a86e8;
+    --brand-dark: #0f4f9e;
+    --ink: #0e1116;
+    --muted: #5b616b;
+    --bg: #ffffff;
+    --bg-soft: #f7f9fc;
+    --card: #ffffff;
+    --border: #e6e8ec;
+    --code-bg: #0d1424;
+    --code-ink: #e6edf6;
+    --note: #1668c9;
+    --warn: #c2790b;
+    --tip: #15915b;
+    --radius: 14px;
+    --shadow: 0 1px 2px rgba(16,22,30,.04), 0 8px 24px -16px rgba(16,22,30,.22);
+    --sidebar-w: 280px;
+    --header-h: 60px;
+  }
+  html.dark {
+    --ink: #e9edf3;
+    --muted: #9aa3af;
+    --bg: #0b0e14;
+    --bg-soft: #11151d;
+    --card: #141925;
+    --border: #232a36;
+    --code-bg: #0a0f1a;
+    --shadow: 0 1px 2px rgba(0,0,0,.4), 0 10px 30px -18px rgba(0,0,0,.7);
+  }
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; scroll-padding-top: calc(var(--header-h) + 16px); }
+  body {
+    margin: 0;
+    font-family: "Segoe UI", system-ui, -apple-system, Roboto, "Helvetica Neue", Arial, sans-serif;
+    color: var(--ink);
+    background: var(--bg);
+    line-height: 1.7;
+    -webkit-font-smoothing: antialiased;
+  }
+  a { color: var(--brand); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+  code { font-family: "JetBrains Mono", "Cascadia Code", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
+
+  /* ── Header ── */
+  header.top {
+    position: sticky; top: 0; z-index: 50;
+    height: var(--header-h);
+    display: flex; align-items: center; gap: 14px;
+    padding: 0 20px;
+    background: color-mix(in srgb, var(--bg) 86%, transparent);
+    backdrop-filter: saturate(160%) blur(10px);
+    border-bottom: 1px solid var(--border);
+  }
+  header.top .brand { display: flex; align-items: center; gap: 11px; font-weight: 800; letter-spacing: -.3px; font-size: 17px; }
+  header.top .brand img { width: 30px; height: 30px; }
+  header.top .brand .dvc { color: var(--brand); }
+  header.top .spacer { flex: 1; }
+  header.top .ghbtn, header.top .toggle {
+    display: inline-flex; align-items: center; gap: 7px;
+    border: 1px solid var(--border); background: var(--card);
+    color: var(--ink); padding: 7px 12px; border-radius: 9px;
+    font-size: 13.5px; font-weight: 600; cursor: pointer;
+  }
+  header.top .ghbtn:hover, header.top .toggle:hover { border-color: var(--brand); color: var(--brand); text-decoration: none; }
+  .menu-btn { display: none; }
+
+  /* ── Layout ── */
+  .layout { display: grid; grid-template-columns: var(--sidebar-w) minmax(0,1fr); max-width: 1240px; margin: 0 auto; }
+  nav.side {
+    position: sticky; top: var(--header-h); align-self: start;
+    height: calc(100vh - var(--header-h));
+    overflow-y: auto; padding: 26px 14px 60px 22px;
+    border-right: 1px solid var(--border);
+  }
+  nav.side .grp { margin-bottom: 18px; }
+  nav.side .grp-title { font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: .9px; color: var(--muted); padding: 0 10px 6px; }
+  nav.side a {
+    display: block; padding: 7px 10px; border-radius: 8px;
+    color: var(--muted); font-size: 14px; font-weight: 500;
+    border-left: 2px solid transparent;
+  }
+  nav.side a:hover { background: var(--bg-soft); color: var(--ink); text-decoration: none; }
+  nav.side a.active { color: var(--brand); background: color-mix(in srgb, var(--brand) 9%, transparent); font-weight: 600; border-left-color: var(--brand); }
+
+  main { padding: 40px clamp(20px, 4vw, 64px) 120px; min-width: 0; }
+
+  /* ── Hero ── */
+  .hero {
+    border: 1px solid var(--border); border-radius: 20px;
+    background:
+      radial-gradient(1200px 200px at 0% -20%, color-mix(in srgb, var(--brand) 14%, transparent), transparent),
+      var(--card);
+    padding: 38px 34px; margin-bottom: 38px; box-shadow: var(--shadow);
+  }
+  .hero .eyebrow { display:inline-block; font-size: 12px; font-weight: 700; letter-spacing: .5px; text-transform: uppercase; color: var(--brand); background: color-mix(in srgb, var(--brand) 11%, transparent); padding: 4px 11px; border-radius: 999px; }
+  .hero h1 { font-size: clamp(26px, 4vw, 38px); line-height: 1.15; letter-spacing: -1px; margin: 16px 0 10px; }
+  .hero p { font-size: 16.5px; color: var(--muted); max-width: 70ch; margin: 0 0 22px; }
+  .hero .cta { display: flex; flex-wrap: wrap; gap: 12px; }
+  .btn { display: inline-flex; align-items: center; gap: 8px; padding: 11px 18px; border-radius: 11px; font-weight: 700; font-size: 14.5px; border: 1px solid transparent; cursor: pointer; }
+  .btn.primary { background: var(--brand); color: #fff; }
+  .btn.primary:hover { background: var(--brand-dark); text-decoration: none; }
+  .btn.ghost { background: var(--card); color: var(--ink); border-color: var(--border); }
+  .btn.ghost:hover { border-color: var(--brand); color: var(--brand); text-decoration: none; }
+
+  .pillrow { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 24px; }
+  .pill { font-size: 12.5px; font-weight: 600; color: var(--muted); border: 1px solid var(--border); border-radius: 999px; padding: 5px 12px; background: var(--bg-soft); }
+  .pill b { color: var(--ink); }
+
+  /* ── Sections ── */
+  section { scroll-margin-top: calc(var(--header-h) + 16px); margin-bottom: 46px; }
+  h2 { font-size: 25px; letter-spacing: -.5px; margin: 8px 0 6px; padding-top: 10px; }
+  h2 .num { display:inline-flex; width: 30px; height: 30px; align-items:center; justify-content:center; background: var(--brand); color:#fff; border-radius: 9px; font-size: 15px; margin-right: 11px; vertical-align: 2px; }
+  h3 { font-size: 18px; margin: 28px 0 8px; letter-spacing: -.2px; }
+  .lead { color: var(--muted); margin-top: 0; }
+  p, li { font-size: 15.5px; }
+  ul, ol { padding-left: 22px; }
+  li { margin: 5px 0; }
+  hr { border: none; border-top: 1px solid var(--border); margin: 40px 0; }
+
+  table.tbl { width: 100%; border-collapse: collapse; margin: 14px 0; font-size: 14.5px; border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; }
+  table.tbl th, table.tbl td { text-align: left; padding: 11px 14px; border-bottom: 1px solid var(--border); vertical-align: top; }
+  table.tbl th { background: var(--bg-soft); font-weight: 700; font-size: 13px; }
+  table.tbl tr:last-child td { border-bottom: none; }
+  table.tbl td code { font-size: 12.8px; }
+
+  /* ── Code blocks ── */
+  .code { position: relative; margin: 16px 0; }
+  .code pre {
+    margin: 0; background: var(--code-bg); color: var(--code-ink);
+    padding: 16px 18px; border-radius: 12px; overflow-x: auto;
+    font-size: 13.3px; line-height: 1.65; border: 1px solid #1c2740;
+  }
+  .code pre code { color: inherit; }
+  .code .lbl { position: absolute; top: 10px; left: 14px; font-size: 11px; font-weight: 700; letter-spacing: .6px; color: #7d8aa3; text-transform: uppercase; }
+  .code.haslbl pre { padding-top: 34px; }
+  .code .copy {
+    position: absolute; top: 8px; right: 8px;
+    background: #1b2740; color: #cdd8ec; border: 1px solid #2b3a59;
+    border-radius: 8px; padding: 5px 10px; font-size: 12px; font-weight: 600; cursor: pointer;
+    opacity: 0; transition: opacity .12s, background .12s;
+  }
+  .code:hover .copy { opacity: 1; }
+  .code .copy:hover { background: #25365a; }
+  .code .copy.done { background: #15915b; color: #fff; border-color: #15915b; }
+  /* token colors (applied by tiny highlighter) */
+  .tok-cmd { color: #79c0ff; }
+  .tok-flag { color: #7ee787; }
+  .tok-str { color: #ffa657; }
+  .tok-cmt { color: #6b7894; font-style: italic; }
+  p code, li code, td code { background: color-mix(in srgb, var(--brand) 10%, transparent); color: var(--brand-dark); padding: 1px 6px; border-radius: 6px; font-size: 13px; }
+  html.dark p code, html.dark li code, html.dark td code { color: #9ecbff; background: #18233a; }
+
+  /* ── Callouts ── */
+  .callout { border: 1px solid var(--border); border-left: 4px solid var(--note); background: var(--bg-soft); border-radius: 12px; padding: 14px 16px; margin: 16px 0; font-size: 14.5px; }
+  .callout .ct { font-weight: 800; font-size: 13px; text-transform: uppercase; letter-spacing: .5px; display: flex; align-items: center; gap: 7px; margin-bottom: 4px; }
+  .callout.note { border-left-color: var(--note); } .callout.note .ct { color: var(--note); }
+  .callout.warn { border-left-color: var(--warn); } .callout.warn .ct { color: var(--warn); }
+  .callout.tip  { border-left-color: var(--tip);  } .callout.tip  .ct { color: var(--tip); }
+  .callout p:last-child { margin-bottom: 0; }
+  .callout code { background: color-mix(in srgb, var(--ink) 8%, transparent); }
+
+  /* ── Step cards ── */
+  .steps { counter-reset: step; }
+  .step { position: relative; border: 1px solid var(--border); border-radius: var(--radius); background: var(--card); padding: 20px 22px 20px 64px; margin: 16px 0; box-shadow: var(--shadow); }
+  .step::before { counter-increment: step; content: counter(step); position: absolute; left: 18px; top: 20px; width: 32px; height: 32px; background: var(--brand); color: #fff; border-radius: 9px; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 16px; }
+  .step h3 { margin-top: 0; }
+
+  /* ── Feature grid ── */
+  .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px,1fr)); gap: 14px; margin: 18px 0; }
+  .feat { border: 1px solid var(--border); border-radius: var(--radius); padding: 16px 18px; background: var(--card); }
+  .feat .ico { font-size: 20px; }
+  .feat h4 { margin: 8px 0 4px; font-size: 15.5px; }
+  .feat p { margin: 0; font-size: 13.8px; color: var(--muted); }
+
+  footer.foot { border-top: 1px solid var(--border); padding: 26px clamp(20px,4vw,64px); color: var(--muted); font-size: 13.5px; max-width: 1240px; margin: 0 auto; }
+
+  @media (max-width: 920px) {
+    .layout { grid-template-columns: 1fr; }
+    nav.side { position: fixed; top: var(--header-h); left: 0; bottom: 0; width: 84%; max-width: 320px; background: var(--bg); z-index: 40; transform: translateX(-104%); transition: transform .25s ease; box-shadow: var(--shadow); }
+    nav.side.open { transform: translateX(0); }
+    .menu-btn { display: inline-flex; }
+    .scrim { position: fixed; inset: var(--header-h) 0 0 0; background: rgba(0,0,0,.4); z-index: 39; opacity: 0; pointer-events: none; transition: opacity .2s; }
+    .scrim.show { opacity: 1; pointer-events: auto; }
+  }
+</style>
+</head>
+<body>
+
+<header class="top">
+  <button class="toggle menu-btn" id="menuBtn" aria-label="Mở menu">☰</button>
+  <span class="brand">
+    <img src="favicon.svg" alt="UIT" />
+    <span><span class="dvc">DVC</span> RAG · Docs</span>
+  </span>
+  <span class="spacer"></span>
+  <a class="ghbtn" href="https://github.com/SparklingWa1er/SE365-RAGChatbotTCHC" target="_blank" rel="noreferrer">GitHub ↗</a>
+  <button class="toggle" id="themeBtn" aria-label="Đổi giao diện">🌙 <span id="themeLbl">Tối</span></button>
+</header>
+
+<div class="layout">
+  <nav class="side" id="side">
+    <div class="grp">
+      <div class="grp-title">Bắt đầu</div>
+      <a href="#gioi-thieu">Giới thiệu</a>
+      <a href="#yeu-cau">Yêu cầu hệ thống</a>
+      <a href="#kien-truc">Kiến trúc</a>
+    </div>
+    <div class="grp">
+      <div class="grp-title">Cài đặt (6 bước)</div>
+      <a href="#b1">1 · Clone &amp; môi trường</a>
+      <a href="#b2">2 · Cài dependencies</a>
+      <a href="#b3">3 · Cấu hình .env</a>
+      <a href="#b4">4 · Tải index (HuggingFace)</a>
+      <a href="#b5">5 · Cài UI React</a>
+      <a href="#b6">6 · Chạy ứng dụng</a>
+    </div>
+    <div class="grp">
+      <div class="grp-title">Sử dụng</div>
+      <a href="#tinh-nang">Tính năng</a>
+      <a href="#che-do">Chế độ suy luận</a>
+      <a href="#nang-cao">Nâng cao</a>
+    </div>
+    <div class="grp">
+      <div class="grp-title">Trợ giúp</div>
+      <a href="#su-co">Xử lý sự cố</a>
+      <a href="#faq">FAQ</a>
+    </div>
+  </nav>
+  <div class="scrim" id="scrim"></div>
+
+  <main>
+    <div class="hero">
+      <span class="eyebrow">Hướng dẫn cài đặt</span>
+      <h1>Chatbot RAG Thủ tục hành chính công Việt Nam</h1>
+      <p>
+        Trợ lý hỏi–đáp về thủ tục hành chính công, dữ liệu từ
+        <a href="https://dichvucong.gov.vn" target="_blank" rel="noreferrer">Cổng Dịch vụ công Quốc gia</a>,
+        xây trên nền <a href="https://github.com/Cinnamon/kotaemon" target="_blank" rel="noreferrer">kotaemon</a> +
+        Azure OpenAI. Tài liệu này hướng dẫn cài đặt từ máy mới đến khi chạy được, trong ~15 phút.
+      </p>
+      <div class="cta">
+        <a class="btn primary" href="#b1">Bắt đầu cài đặt →</a>
+        <a class="btn ghost" href="#su-co">Xử lý sự cố</a>
+      </div>
+      <div class="pillrow">
+        <span class="pill"><b>5.208</b> thủ tục</span>
+        <span class="pill"><b>Azure</b> gpt-4o + embedding-3-large</span>
+        <span class="pill"><b>React</b> 19 + Vite</span>
+        <span class="pill"><b>FastAPI</b> backend</span>
+        <span class="pill"><b>Windows</b> · Python 3.10</span>
+      </div>
+    </div>
+
+    <!-- GIỚI THIỆU -->
+    <section id="gioi-thieu">
+      <h2>Giới thiệu</h2>
+      <p class="lead">Chatbot trả lời các câu hỏi về thủ tục hành chính (hồ sơ, lệ phí, trình tự, thời hạn, cơ quan thực hiện…) dựa trên kho 5.208 thủ tục đã được lập chỉ mục (RAG — Retrieval-Augmented Generation). Mỗi câu trả lời có trích dẫn 【n】 dẫn về đúng đoạn nguồn.</p>
+      <div class="callout note">
+        <div class="ct">ℹ️ Điểm mấu chốt</div>
+        <p>Toàn bộ code (kể cả thư viện kotaemon đã chỉnh) đã nằm trong repo (vendor ở <code>app/libs/</code>). Bạn <b>không</b> cần clone kotaemon riêng — chỉ cần: cài deps → tải index → điền <code>.env</code> → chạy.</p>
+      </div>
+      <div class="grid">
+        <div class="feat"><div class="ico">🔎</div><h4>Hybrid retrieval</h4><p>Chroma (vector) + LanceDB (BM25), rerank bằng LLM.</p></div>
+        <div class="feat"><div class="ico">🧠</div><h4>2 chế độ suy luận</h4><p>ReAct agent đa bước hoặc Trả lời nhanh một lượt.</p></div>
+        <div class="feat"><div class="ico">📌</div><h4>Trích dẫn truy vết</h4><p>Bấm 【n】 để nhảy tới nguồn gốc tương ứng.</p></div>
+        <div class="feat"><div class="ico">🌐</div><h4>Web fallback</h4><p>Tự tìm Brave Search khi corpus không có dữ liệu.</p></div>
+      </div>
+    </section>
+
+    <!-- YÊU CẦU -->
+    <section id="yeu-cau">
+      <h2>Yêu cầu hệ thống</h2>
+      <table class="tbl">
+        <tr><th>Thành phần</th><th>Yêu cầu</th><th>Ghi chú</th></tr>
+        <tr><td>Hệ điều hành</td><td><b>Windows</b></td><td>Linux/HF Spaces chưa kiểm thử HNSW binary (xem mục Sự cố).</td></tr>
+        <tr><td>Python</td><td><b>3.10</b></td><td>Bắt buộc 3.10 (deps kotaemon pin theo bản này).</td></tr>
+        <tr><td>uv</td><td><code>pip install uv</code></td><td>Trình cài deps nhanh, tránh kẹt resolver của pip.</td></tr>
+        <tr><td>Node.js</td><td><b>≥ 20</b> (kèm npm)</td><td>Cho UI React (đã test Node 22 / npm 10).</td></tr>
+        <tr><td>git</td><td>bất kỳ</td><td>Để clone repo.</td></tr>
+        <tr><td>Azure OpenAI</td><td>2 deployment</td><td><code>gpt-4o</code> + <code>text-embedding-3-large</code>.</td></tr>
+        <tr><td>Dung lượng trống</td><td>~2.5 GB</td><td>Index ~1.5 GB ở <code>C:\ktem_data</code> + deps.</td></tr>
+        <tr><td>Brave Search API</td><td><i>tuỳ chọn</i></td><td>Bật web fallback cho ReAct agent (free ~2.000 query/tháng).</td></tr>
+      </table>
+    </section>
+
+    <!-- KIẾN TRÚC -->
+    <section id="kien-truc">
+      <h2>Kiến trúc local sau khi cài</h2>
+      <p class="lead">Sau khi cài xong, máy có <b>hai phần tách biệt</b>: repo code (git) và index dữ liệu (ngoài git, tải từ HuggingFace).</p>
+      <div class="code haslbl">
+        <span class="lbl">Bố cục thư mục</span>
+        <button class="copy">Copy</button>
+<pre><code>du-an/                          ← REPO (git): code + scripts (~vài chục MB)
+├── pipeline/   crawler + parser (crawl & xử lý dữ liệu → corpus)
+├── rag/        wiring kotaemon: prompts.py, flowsettings.py, ingest, query_test
+├── app/        kotaemon đã vendor (app/libs/{kotaemon,ktem}) + app/api (FastAPI)
+├── frontend/   UI React (Vite + React 19 + Tailwind 4) — demo chính
+├── scripts/    init_index.py / pack_index.py (chia sẻ index qua HuggingFace)
+├── docs/       tài liệu này
+├── .env        ← bạn tự điền Azure key (gitignore)
+├── .venv/      ← Python deps (gitignore)
+└── frontend/node_modules/   ← npm deps (gitignore)
+
+C:\ktem_data\                  ← INDEX (ngoài repo): tải/giải nén từ HF (~1.5 GB)
+└── user_data/
+    ├── vectorstore/&lt;uuid&gt;/   Chroma HNSW (≈33k vector × 3072 chiều)
+    ├── docstore/index_1.lance LanceDB: text các chunk + FTS (BM25)
+    ├── files/index_1/         bản .md gốc đã ingest
+    └── sql.db                 metadata ktem (5208 thủ tục)</code></pre>
+      </div>
+      <table class="tbl">
+        <tr><th>Tầng</th><th>Công nghệ</th></tr>
+        <tr><td>Embedding</td><td>Azure <code>text-embedding-3-large</code> (3072 chiều)</td></tr>
+        <tr><td>LLM</td><td>Azure OpenAI <code>gpt-4o</code></td></tr>
+        <tr><td>RAG framework</td><td>kotaemon (Chroma + LanceDB, hybrid retrieval)</td></tr>
+        <tr><td>Backend</td><td>FastAPI (<code>app/api/</code>), stream SSE</td></tr>
+        <tr><td>Frontend</td><td>React 19 + Vite 5 + Tailwind 4</td></tr>
+      </table>
+    </section>
+
+    <hr />
+
+    <!-- CÀI ĐẶT -->
+    <section id="cai-dat">
+      <h2>Cài đặt (máy mới)</h2>
+      <p class="lead">Thực hiện tuần tự 6 bước. Mọi lệnh chạy trong <b>PowerShell</b>, từ thư mục gốc repo.</p>
+
+      <div class="steps">
+        <div class="step" id="b1">
+          <h3>Clone &amp; tạo môi trường ảo</h3>
+          <div class="code"><button class="copy">Copy</button><pre><code>git clone &lt;url-repo&gt; "du-an"
+cd "du-an"
+
+python -m venv .venv
+.venv\Scripts\python.exe -m pip install -U pip uv</code></pre></div>
+          <div class="callout warn">
+            <div class="ct">⚠️ Đường dẫn phải ASCII</div>
+            <p>Đặt repo ở thư mục tên thuần ASCII (không dấu tiếng Việt). <code>hnswlib</code> không tạo được file <code>.bin</code> nếu đường dẫn có ký tự non-ASCII.</p>
+          </div>
+        </div>
+
+        <div class="step" id="b2">
+          <h3>Cài dependencies (dùng <code>uv</code>, KHÔNG dùng pip)</h3>
+          <p>pip dễ kẹt resolver với deps cũ của kotaemon — dùng <code>uv</code>:</p>
+          <div class="code"><button class="copy">Copy</button><pre><code>.venv\Scripts\uv.exe pip install --python .venv\Scripts\python.exe `
+  --constraint constraints.txt `
+  -e "app/libs/kotaemon" -e "app/libs/ktem" `
+  fastembed "onnxruntime&lt;1.20" "unstructured&gt;=0.15.8,&lt;0.16" tabulate cachetools</code></pre></div>
+          <div class="callout note"><div class="ct">ℹ️ Ghi chú</div><p>Dấu <code>`</code> cuối dòng là ký tự nối dòng của PowerShell. Có thể gộp thành 1 dòng nếu muốn.</p></div>
+        </div>
+
+        <div class="step" id="b3">
+          <h3>Cấu hình <code>.env</code></h3>
+          <div class="code"><button class="copy">Copy</button><pre><code>copy .env.example .env</code></pre></div>
+          <p>Mở <code>.env</code> và điền các giá trị Azure:</p>
+          <div class="code haslbl"><span class="lbl">.env</span><button class="copy">Copy</button><pre><code>AZURE_OPENAI_ENDPOINT=https://&lt;resource&gt;.openai.azure.com/
+AZURE_OPENAI_API_KEY=&lt;key&gt;
+AZURE_OPENAI_CHAT_DEPLOYMENT=gpt-4o
+AZURE_OPENAI_EMBEDDINGS_DEPLOYMENT=text-embedding-3-large
+
+# Đã có sẵn — KHÔNG đổi (xem lưu ý path ASCII):
+KH_APP_DATA_DIR=C:\ktem_data
+
+# Tuỳ chọn — bật web fallback cho ReAct agent (để trống = tắt):
+BRAVE_API_KEY=&lt;key tại https://brave.com/search/api/&gt;</code></pre></div>
+        </div>
+
+        <div class="step" id="b4">
+          <h3>Tải index đã embed từ HuggingFace</h3>
+          <p>Không cần crawl/embed lại — tải index dựng sẵn (~728 MB nén) rồi giải nén vào <code>C:\ktem_data</code>:</p>
+          <div class="code"><button class="copy">Copy</button><pre><code>.venv\Scripts\python.exe scripts\init_index.py --hf-repo MinhTriet/dvc-rag-embeddings</code></pre></div>
+          <p>Kiểm tra index bất kỳ lúc nào (in số tài liệu = 5208, kích thước HNSW, trạng thái <code>.env</code>):</p>
+          <div class="code"><button class="copy">Copy</button><pre><code>.venv\Scripts\python.exe scripts\init_index.py --verify</code></pre></div>
+          <div class="callout tip"><div class="ct">💡 Có file thủ công?</div><p>Nếu đã tải <code>ktem_index.tar.gz</code> sẵn: <code>python scripts\init_index.py --from C:\path\to\ktem_index.tar.gz</code></p></div>
+        </div>
+
+        <div class="step" id="b5">
+          <h3>Cài dependencies cho UI React</h3>
+          <div class="code"><button class="copy">Copy</button><pre><code>cd frontend
+npm install
+cd ..</code></pre></div>
+          <p>UI React gọi backend qua tầng FastAPI <code>app/api/</code>. Hợp đồng API + SSE xem <code>frontend/README.md</code> hoặc Swagger tại <code>http://127.0.0.1:8000/docs</code>.</p>
+        </div>
+
+        <div class="step" id="b6">
+          <h3>Chạy ứng dụng (2 tiến trình song song)</h3>
+          <p>Demo chính là UI React — cần backend + frontend, mỗi cái một terminal, đều từ gốc repo.</p>
+          <div class="code haslbl"><span class="lbl">Terminal 1 — Backend (FastAPI)</span><button class="copy">Copy</button><pre><code>.venv\Scripts\python.exe -m uvicorn app.api.main:app --port 8000
+# Swagger: http://127.0.0.1:8000/docs</code></pre></div>
+          <div class="code haslbl"><span class="lbl">Terminal 2 — Frontend (Vite)</span><button class="copy">Copy</button><pre><code>cd frontend
+npm run dev
+# → http://127.0.0.1:5173</code></pre></div>
+          <div class="callout note"><div class="ct">ℹ️ Thứ tự</div><p>Mở <a href="http://127.0.0.1:5173" target="_blank" rel="noreferrer">http://127.0.0.1:5173</a>. Vite tự proxy <code>/api</code> → <code>:8000</code> (không lo CORS). <b>Phải chạy backend trước</b> rồi mới tới frontend.</p></div>
+          <div class="callout tip"><div class="ct">💡 Có sẵn script tắt</div><p>Repo có <code>run-backend.ps1</code> và <code>run-frontend.ps1</code> (đã set UTF-8) — chỉ cần <code>.\run-backend.ps1</code> rồi <code>.\run-frontend.ps1</code> ở terminal thứ 2.</p></div>
+        </div>
+      </div>
+    </section>
+
+    <hr />
+
+    <!-- TÍNH NĂNG -->
+    <section id="tinh-nang">
+      <h2>Tính năng giao diện</h2>
+      <div class="grid">
+        <div class="feat"><div class="ico">💬</div><h4>Tiêu đề tự đặt</h4><p>Đoạn chat tự sinh tên ngắn gọn từ câu hỏi đầu tiên.</p></div>
+        <div class="feat"><div class="ico">📌</div><h4>Trích dẫn bấm được</h4><p>Bấm 【n】 trong câu trả lời → panel Nguồn mở &amp; cuộn tới đúng nguồn.</p></div>
+        <div class="feat"><div class="ico">🧩</div><h4>Các bước suy luận có tên</h4><p>“Tra cứu tài liệu: …”, “Tìm kiếm web: …”, “Tổng hợp kết quả”.</p></div>
+        <div class="feat"><div class="ico">🗺️</div><h4>Sơ đồ tư duy</h4><p>Zoom / vừa khung / toàn màn hình / tải .svg.</p></div>
+        <div class="feat"><div class="ico">🗂️</div><h4>Panel nguồn gọn</h4><p>Nguồn tham khảo nhiều thì tự thu gọn, không tràn.</p></div>
+        <div class="feat"><div class="ico">💾</div><h4>Lưu &amp; khôi phục</h4><p>Suy luận + nguồn được lưu, mở lại hội thoại là thấy đầy đủ.</p></div>
+      </div>
+    </section>
+
+    <!-- CHẾ ĐỘ -->
+    <section id="che-do">
+      <h2>Chế độ suy luận</h2>
+      <p class="lead">Chọn ngay ở màn hình hội thoại mới (hoặc Settings → Reasoning).</p>
+      <table class="tbl">
+        <tr><th>Chế độ</th><th>Engine</th><th>Khi nào dùng</th></tr>
+        <tr><td><b>✨ Suy luận sâu</b> (mặc định)</td><td><code>ReAct</code></td><td>Câu hỏi phức tạp cần nhiều bước tra cứu, so sánh, kết hợp web. Tách câu hỏi con → tra riêng → tổng hợp có trích dẫn.</td></tr>
+        <tr><td><b>⚡ Trả lời nhanh</b></td><td><code>simple</code></td><td>Câu hỏi đơn, một lượt tra cứu, gọn nhẹ.</td></tr>
+      </table>
+      <div class="callout note">
+        <div class="ct">ℹ️ Ví dụ ReAct xử lý tốt</div>
+        <p>“Tôi 16 tuổi, mất hộ chiếu cũ, cần giấy tờ gì và <b>ai nộp thay</b> được?” — tách 2 nhánh, trả lời theo độ tuổi. &nbsp;·&nbsp; “<b>So sánh</b> hồ sơ &amp; lệ phí hộ chiếu gắn chip vs không chip” — chống dựng so sánh giả khi dữ liệu chỉ có một loại.</p>
+      </div>
+    </section>
+
+    <!-- NÂNG CAO -->
+    <section id="nang-cao">
+      <h2>Nâng cao &amp; tuỳ chọn</h2>
+
+      <h3>Bản host LAN (máy khác truy cập)</h3>
+      <div class="code haslbl"><span class="lbl">Build tĩnh + preview (port 4173)</span><button class="copy">Copy</button><pre><code># Terminal 1 — vẫn cần backend chạy
+.venv\Scripts\python.exe -m uvicorn app.api.main:app --port 8000
+
+# Terminal 2
+cd frontend
+npm run build
+npm run preview            # → http://&lt;IP-máy&gt;:4173</code></pre></div>
+      <div class="callout tip"><div class="ct">💡 Tốc độ</div><p>Bản <code>preview</code> (đã build) nhanh hơn <code>npm run dev</code> nhiều — dev có React StrictMode render gấp đôi &amp; chưa minify. Đánh giá tốc độ thật nên dùng preview.</p></div>
+
+      <h3>UI Gradio &amp; test headless (phụ)</h3>
+      <div class="code"><button class="copy">Copy</button><pre><code># UI Gradio (1 tiến trình, không cần API/FE) → http://localhost:7860
+.venv\Scripts\python.exe app\app.py
+
+# Test RAG không qua UI
+.venv\Scripts\python.exe rag\query_test.py "Hồ sơ đăng ký khai sinh gồm những gì?"</code></pre></div>
+
+      <h3>Xây index từ đầu (crawl + embed)</h3>
+      <div class="code"><button class="copy">Copy</button><pre><code># 1. Crawl  → data/raw/*.json (~5208 thủ tục)
+.venv\Scripts\python.exe pipeline\crawler\crawl.py
+# 2. Parse  → data/corpus/md/*.md
+.venv\Scripts\python.exe pipeline\parser\parse.py
+# 3. Ingest → C:\ktem_data (nhanh: 10 worker)
+.venv\Scripts\python.exe rag\fast_ingest.py --workers 10
+# 4. Đóng gói + chia sẻ lên HuggingFace
+.venv\Scripts\python.exe scripts\pack_index.py --hf-repo MinhTriet/dvc-rag-embeddings --hf-token hf_xxx</code></pre></div>
+    </section>
+
+    <hr />
+
+    <!-- SỰ CỐ -->
+    <section id="su-co">
+      <h2>Xử lý sự cố</h2>
+
+      <div class="callout warn">
+        <div class="ct">⚠️ Lỗi tiếng Việt trên console (UnicodeEncodeError / charmap)</div>
+        <p>Console Windows mặc định cp1252. Đặt biến trước khi chạy script Python in tiếng Việt: <code>$env:PYTHONUTF8=1</code>. Các script <code>run-*.ps1</code> đã set sẵn.</p>
+      </div>
+
+      <div class="callout warn">
+        <div class="ct">⚠️ Mất toàn bộ vector sau ingest (không báo lỗi)</div>
+        <p>Do đường dẫn index có ký tự non-ASCII. Giữ <code>KH_APP_DATA_DIR=C:\ktem_data</code> — không đặt trong thư mục tên tiếng Việt.</p>
+      </div>
+
+      <div class="callout warn">
+        <div class="ct">⚠️ Tiến trình ingest treo sau khi kill</div>
+        <p>Xóa cache theflow rồi chạy lại:</p>
+        <div class="code"><button class="copy">Copy</button><pre><code>Remove-Item -Recurse -Force "$env:TEMP\claude\theflow_$env:USERNAME"</code></pre></div>
+      </div>
+
+      <table class="tbl">
+        <tr><th>Triệu chứng</th><th>Khắc phục</th></tr>
+        <tr><td>Frontend báo lỗi gọi máy chủ / trắng trang</td><td>Chưa chạy backend, hoặc chạy sai thứ tự. Mở <code>:8000/docs</code> kiểm tra backend trước.</td></tr>
+        <tr><td>Câu trả lời không cập nhật sau khi ingest lại</td><td>Restart <code>uvicorn</code> để nạp lại vector store vào RAM.</td></tr>
+        <tr><td>Sửa code backend không có tác dụng</td><td><code>uvicorn</code> không bật <code>--reload</code> — restart tiến trình backend.</td></tr>
+        <tr><td>Port 8000/5173 đang bận</td><td>Tắt tiến trình cũ, hoặc đổi <code>--port</code> (backend) / sửa proxy Vite.</td></tr>
+        <tr><td><code>init_index.py</code> báo embedding table có rows</td><td>Bình thường nếu app đã chạy trước đó — không ảnh hưởng.</td></tr>
+      </table>
+
+      <div class="callout note"><div class="ct">ℹ️ Linux / HF Spaces</div><p>HNSW binary chưa kiểm thử cross-platform. Deploy Linux cần đặt <code>KH_APP_DATA_DIR=/ktem_data</code> và kiểm tra file <code>.bin</code> đọc được.</p></div>
+    </section>
+
+    <!-- FAQ -->
+    <section id="faq">
+      <h2>Câu hỏi thường gặp</h2>
+      <h3>Có cần GPU không?</h3>
+      <p>Không. LLM &amp; embedding chạy trên Azure OpenAI (đám mây); máy local chỉ chạy retrieval + UI.</p>
+      <h3>Có bắt buộc Brave API không?</h3>
+      <p>Không. Để trống <code>BRAVE_API_KEY</code> là tắt web fallback; ReAct vẫn tra corpus nội bộ bình thường.</p>
+      <h3>Tốn bao nhiêu dung lượng?</h3>
+      <p>Index ~1.5 GB (ở <code>C:\ktem_data</code>) + deps Python/Node. Tổng ~2.5 GB.</p>
+      <h3>Vì sao “Trả lời nhanh” đôi khi vẫn mất ~1 phút?</h3>
+      <p>Sau khi trả lời, nó còn dựng sơ đồ tư duy (1 lời gọi LLM) + biểu đồ trích dẫn. Có thể tắt 2 addon này cho riêng engine simple để nhanh hơn.</p>
+      <h3>Đổi quy tắc parse/chunk thì sao?</h3>
+      <p>Phải <b>re-ingest</b> rồi đóng gói lại index lên HuggingFace (xem mục Nâng cao) — code repo và index là hai nguồn độc lập.</p>
+    </section>
+  </main>
+</div>
+
+<footer class="foot">
+  Chatbot RAG Thủ tục hành chính công · Dữ liệu từ Cổng Dịch vụ công Quốc gia (mục đích học tập/nghiên cứu) ·
+  Xây trên <a href="https://github.com/Cinnamon/kotaemon" target="_blank" rel="noreferrer">kotaemon</a>.
+</footer>
+
+<script>
+  // ── Copy-to-clipboard cho mọi code block ──
+  document.querySelectorAll('.code').forEach(function (box) {
+    var btn = box.querySelector('.copy');
+    var pre = box.querySelector('pre');
+    if (!btn || !pre) return;
+    btn.addEventListener('click', function () {
+      var text = pre.innerText;
+      navigator.clipboard.writeText(text).then(function () {
+        btn.textContent = '✓ Đã copy';
+        btn.classList.add('done');
+        setTimeout(function () { btn.textContent = 'Copy'; btn.classList.remove('done'); }, 1400);
+      });
+    });
+  });
+
+  // ── Tô màu tối giản cho code (comment / cờ / chuỗi) ──
+  document.querySelectorAll('.code pre code').forEach(function (code) {
+    var html = code.innerHTML;
+    html = html.replace(/(#[^\n<]*)/g, '<span class="tok-cmt">$1</span>');
+    code.innerHTML = html;
+  });
+
+  // ── Scrollspy: tô sáng mục đang xem trong sidebar ──
+  var links = Array.prototype.slice.call(document.querySelectorAll('nav.side a'));
+  var map = {};
+  links.forEach(function (a) {
+    var id = a.getAttribute('href').slice(1);
+    var el = document.getElementById(id);
+    if (el) map[id] = a;
+  });
+  var spy = new IntersectionObserver(function (entries) {
+    entries.forEach(function (e) {
+      if (e.isIntersecting) {
+        links.forEach(function (l) { l.classList.remove('active'); });
+        var a = map[e.target.id];
+        if (a) a.classList.add('active');
+      }
+    });
+  }, { rootMargin: '-20% 0px -70% 0px' });
+  Object.keys(map).forEach(function (id) {
+    var el = document.getElementById(id);
+    if (el) spy.observe(el);
+  });
+
+  // ── Menu mobile ──
+  var side = document.getElementById('side');
+  var scrim = document.getElementById('scrim');
+  var menuBtn = document.getElementById('menuBtn');
+  function closeMenu() { side.classList.remove('open'); scrim.classList.remove('show'); }
+  if (menuBtn) menuBtn.addEventListener('click', function () { side.classList.toggle('open'); scrim.classList.toggle('show'); });
+  if (scrim) scrim.addEventListener('click', closeMenu);
+  links.forEach(function (a) { a.addEventListener('click', closeMenu); });
+
+  // ── Dark mode (nhớ lựa chọn) ──
+  var themeBtn = document.getElementById('themeBtn');
+  var themeLbl = document.getElementById('themeLbl');
+  function applyTheme(t) {
+    document.documentElement.classList.toggle('dark', t === 'dark');
+    if (themeBtn) themeBtn.firstChild.textContent = (t === 'dark' ? '☀️ ' : '🌙 ');
+    if (themeLbl) themeLbl.textContent = (t === 'dark' ? 'Sáng' : 'Tối');
+  }
+  var saved = localStorage.getItem('dvc-docs-theme')
+    || (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+  applyTheme(saved);
+  if (themeBtn) themeBtn.addEventListener('click', function () {
+    var next = document.documentElement.classList.contains('dark') ? 'light' : 'dark';
+    localStorage.setItem('dvc-docs-theme', next);
+    applyTheme(next);
+  });
+</script>
+</body>
+</html>

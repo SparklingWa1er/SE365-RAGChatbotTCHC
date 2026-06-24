@@ -161,7 +161,7 @@ class FullQAPipeline(BaseReasoning):
                     activeNode:
                         placement: center
                     initialExpandLevel: 4
-                    maxWidth: 200
+                    maxWidth: 320
                 ---
                 {}
                 </script>
@@ -308,6 +308,10 @@ class FullQAPipeline(BaseReasoning):
             )
             yield Document(channel="chat", content=out_of_scope)
             return Document(content=out_of_scope)
+
+        # Lưu lại tài liệu đã dùng (đã rerank/lọc) để tầng API dựng citation JSON
+        # (engine.build_citations đọc _last_docs cho engine "Trả lời nhanh").
+        self._last_docs = docs
 
         evidence_mode, evidence, images = self.evidence_pipeline(docs).content
 

@@ -86,6 +86,9 @@ def get_conversation(conv_id: str) -> Optional[dict]:
             # HTML các bước suy luận (Thought/Action/Observation + nguồn) theo từng lượt,
             # khớp 1-1 với messages — dùng để hiện lại dropdown suy luận khi tải lại trang.
             "reasoning": ds.get("retrieval_messages", []),
+            # Danh sách nguồn (citations) theo từng lượt, khớp 1-1 với messages —
+            # dùng để khôi phục panel "Nguồn" bên phải khi mở lại hội thoại.
+            "citations": ds.get("citations_messages", []),
         }
 
 
@@ -118,8 +121,8 @@ def delete_conversation(conv_id: str) -> bool:
 
 
 def append_message(conv_id: str, user_msg: str, bot_msg: str,
-                   info_html: str = "") -> None:
-    """Lưu một lượt hỏi-đáp vào data_source.messages (+ retrieval_messages)."""
+                   info_html: str = "", citations: Optional[list] = None) -> None:
+    """Lưu một lượt hỏi-đáp vào data_source.messages (+ retrieval_messages + citations)."""
     Conversation, engine, Session, select = _imports()
     with Session(engine) as s:
         r = s.exec(select(Conversation).where(Conversation.id == conv_id)).first()
@@ -128,6 +131,7 @@ def append_message(conv_id: str, user_msg: str, bot_msg: str,
         ds = deepcopy(r.data_source or {})
         ds.setdefault("messages", []).append([user_msg, bot_msg])
         ds.setdefault("retrieval_messages", []).append(info_html)
+        ds.setdefault("citations_messages", []).append(citations or [])
         r.data_source = ds
         s.add(r)
         s.commit()
@@ -147,6 +151,8 @@ def drop_last_message(conv_id: str) -> Optional[list[str]]:
         popped = msgs.pop()
         if ds.get("retrieval_messages"):
             ds["retrieval_messages"].pop()
+        if ds.get("citations_messages"):
+            ds["citations_messages"].pop()
         ds["messages"] = msgs
         r.data_source = ds
         s.add(r)

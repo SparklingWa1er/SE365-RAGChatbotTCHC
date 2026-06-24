@@ -21,6 +21,64 @@ router = APIRouter(prefix="/api", tags=["chat"])
 _cancelled: set[str] = set()
 
 
+def _fallback_title(question: str) -> str:
+    """Tiêu đề dự phòng khi không gọi được LLM: cắt gọn câu hỏi đầu."""
+    text = " ".join((question or "").split())
+    if not text:
+        return "Hội thoại mới"
+    words = text.split(" ")
+    title = " ".join(words[:9])
+    if len(title) > 60:
+        title = title[:60].rsplit(" ", 1)[0]
+    if len(words) > 9 or len(text) > 60:
+        title = title.rstrip(" ,.;:") + "…"
+    return title[:1].upper() + title[1:]
+
+
+def _looks_default_name(name: str | None) -> bool:
+    """Tên mặc định do ktem sinh: 'Untitled - YYYY-mm-dd HH:MM:SS' (hoặc rỗng)."""
+    if not name:
+        return True
+    n = name.strip()
+    return n.lower().startswith("untitled") or n == ""
+
+
+def _generate_title(question: str) -> str:
+    """Sinh tiêu đề ngắn cho hội thoại qua LLM; lỗi -> cắt gọn câu hỏi."""
+    try:
+        from ktem.llms.manager import llms
+
+        from kotaemon.base import HumanMessage, SystemMessage
+        from kotaemon.llms import PromptTemplate
+
+        from rag.prompts import TITLE_PROMPT_TEMPLATE, TITLE_SYSTEM_PROMPT
+
+        prompt = PromptTemplate(TITLE_PROMPT_TEMPLATE).populate(question=question)
+        llm = llms.get_default()
+        raw = llm(
+            [SystemMessage(content=TITLE_SYSTEM_PROMPT), HumanMessage(content=prompt)]
+        ).text
+        # Lấy dòng đầu, bỏ ngoặc kép / dấu câu thừa LLM hay thêm.
+        title = (raw or "").strip().splitlines()[0].strip().strip('"“”').strip()
+        title = title.rstrip(" .;:")
+        if not title or len(title) > 80:
+            return _fallback_title(question)
+        return title
+    except Exception:
+        return _fallback_title(question)
+
+
+def _autoname_conversation(conv_id: str, question: str) -> None:
+    """Đặt tên hội thoại từ câu hỏi đầu nếu tên vẫn là mặc định (best-effort)."""
+    try:
+        detail = store.get_conversation(conv_id) or {}
+        if not _looks_default_name(detail.get("name")):
+            return
+        store.patch_conversation(conv_id, name=_generate_title(question))
+    except Exception:
+        pass
+
+
 class StopRequest(BaseModel):
     conversation_id: str
 
@@ -30,6 +88,8 @@ def _run_stream(conv_id: str, message: str, history: list, overrides: dict | Non
     """Generator các khung SSE cho một lượt chat. Lưu lượt + sinh gợi ý ở cuối."""
     lang = (overrides or {}).get("language")
     last_text, last_info = "", ""
+    last_citations: list = []
+    is_first_turn = not history  # lượt đầu của hội thoại -> đặt tên tự động
     cancelled = False
 
     docs = stream_chat(
@@ -50,27 +110,32 @@ def _run_stream(conv_id: str, message: str, history: list, overrides: dict | Non
             last_text = ""
         elif ev["type"] == "info":
             last_info = ev["html"]
+        elif ev["type"] == "citations":
+            last_citations = ev["items"]
         yield sse(ev)
 
     _cancelled.discard(conv_id)
 
     if cancelled:
         if last_text:
-            store.append_message(conv_id, message, last_text, last_info)
+            store.append_message(conv_id, message, last_text, last_info, last_citations)
         yield sse({"type": "done", "conversation_id": conv_id,
                    "cancelled": True, "suggestions": []})
         return
 
     if last_text:
-        store.append_message(conv_id, message, last_text, last_info)
+        store.append_message(conv_id, message, last_text, last_info, last_citations)
+        if is_first_turn:
+            _autoname_conversation(conv_id, message)
     new_history = history + [(message, last_text)]
     try:
         suggestions = generate_suggestions(new_history, lang)
         store.save_suggestions(conv_id, suggestions)
     except Exception:
         suggestions = []
+    name = (store.get_conversation(conv_id) or {}).get("name")
     yield sse({"type": "done", "conversation_id": conv_id,
-               "suggestions": suggestions})
+               "suggestions": suggestions, "name": name})
 
 
 @router.post("/chat")

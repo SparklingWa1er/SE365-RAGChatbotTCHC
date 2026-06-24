@@ -245,25 +245,57 @@ MINDMAP_PROMPT_TEMPLATE = (
     "Câu hỏi:\n{question}\n\n"
     "Ngữ cảnh:\n{context}\n\n"
     "Tạo một sơ đồ tư duy PlantUML từ ngữ cảnh trên, bằng tiếng Việt, theo quy tắc:\n"
-    "1. CHỈ đưa vào khía cạnh mà CÂU HỎI hỏi; bỏ qua thông tin không liên quan.\n"
+    "1. Ưu tiên khía cạnh CÂU HỎI hỏi (đặt nhánh đầu), nhưng bổ sung các khía cạnh "
+    "CỐT LÕI của thủ tục nếu CÓ trong ngữ cảnh để sơ đồ đầy đủ: Hồ sơ/giấy tờ, "
+    "Trình tự thực hiện, Cách thức nộp, Thời hạn giải quyết, Lệ phí, Cơ quan thực "
+    "hiện, Kết quả. Bỏ nhánh nào ngữ cảnh không có (KHÔNG bịa).\n"
     "2. Mỗi node là nhãn NGẮN (tối đa ~8 từ) nắm ý chính — không chép nguyên câu dài.\n"
     "3. Khi liệt kê nhiều giấy tờ, gom thành 'Bắt buộc chung' và 'Theo trường hợp/đối "
     "tượng' (mỗi giấy tờ điều kiện nêu rõ điều kiện áp dụng làm node con); không liệt kê "
     "phẳng giấy tờ điều kiện ngang giấy tờ bắt buộc. Ngữ cảnh không phân biệt thì không "
     "bịa ra nhóm.\n"
-    "4. Không thêm thông tin ngoài ngữ cảnh; số liệu/mốc thời gian/mức phí đúng nguyên "
-    "văn ngữ cảnh.\n"
+    "4. Không thêm thông tin ngoài ngữ cảnh; số liệu/mốc thời gian/mức phí/tên cơ quan "
+    "đúng nguyên văn ngữ cảnh (gắn ngay vào node con để sơ đồ mang thông tin, ví dụ "
+    "'Trực tuyến: 5 ngày làm việc').\n"
     "5. Độ sâu 2–4 cấp, cân đối; node gốc là tên thủ tục/chủ đề.\n\n"
     "Dùng đúng mẫu sau (cấu trúc minh hoạ, KHÔNG phải dữ liệu thật):\n\n"
     "@startmindmap\n"
     "* Tên thủ tục\n"
-    "** Giấy tờ cần thiết\n"
+    "** Hồ sơ cần thiết\n"
     "*** Bắt buộc chung\n"
     "**** Tờ khai theo mẫu\n"
     "*** Theo trường hợp/đối tượng\n"
     "**** Trường hợp A\n"
     "***** Giấy tờ riêng của trường hợp A\n"
+    "** Trình tự thực hiện\n"
+    "*** Bước 1: nộp hồ sơ\n"
+    "*** Bước 2: tiếp nhận & xử lý\n"
+    "** Cách thức nộp\n"
+    "*** Trực tuyến / Trực tiếp / Bưu chính\n"
+    "** Thời hạn giải quyết\n"
+    "*** Số ngày theo quy định\n"
     "** Lệ phí\n"
     "*** Mức phí theo quy định\n"
+    "** Cơ quan thực hiện\n"
+    "** Kết quả\n"
     "@endmindmap"
+)
+
+
+# ---------------------------------------------------------------------------
+# Prompt ĐẶT TÊN HỘI THOẠI — sinh tiêu đề ngắn từ câu hỏi đầu tiên.
+# Dùng ở app/api/routers/chat.py (_autoname_conversation) cho lượt chat đầu.
+# Trả về MỘT dòng tiêu đề thuần (không dấu ngoặc kép, không markdown).
+# ---------------------------------------------------------------------------
+TITLE_SYSTEM_PROMPT = (
+    "Bạn đặt tiêu đề ngắn cho một đoạn hội thoại hỏi–đáp về thủ tục hành chính công "
+    "Việt Nam. Tiêu đề phải bằng tiếng Việt, viết hoa chữ đầu, 3–8 từ, nắm đúng chủ "
+    "đề chính của câu hỏi (thường là tên thủ tục/việc cần làm). KHÔNG dùng dấu ngoặc "
+    "kép, KHÔNG dấu chấm cuối, KHÔNG markdown, KHÔNG mở đầu bằng 'Hỏi về'/'Tiêu đề'. "
+    "Chỉ trả về đúng một dòng tiêu đề."
+)
+
+TITLE_PROMPT_TEMPLATE = (
+    "Câu hỏi của người dùng:\n{question}\n\n"
+    "Đặt một tiêu đề ngắn gọn cho đoạn hội thoại này."
 )

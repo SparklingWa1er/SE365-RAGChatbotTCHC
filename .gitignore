@@ -74,7 +74,6 @@ frontend/vite.config.d.ts
 .agents/
 .playwright-mcp/
 skills-lock.json
-docs/
 sidebar-new.png
 #slide
 slide_references/

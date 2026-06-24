@@ -163,7 +163,16 @@ def build_citations(pipeline, answer) -> Optional[list[dict]]:
     meta = getattr(answer, "metadata", None) or {}
     if not meta.get("citation"):
         return None
-    docs = pipeline._dedup_collected()
+    # Lấy tập tài liệu đã dùng để dựng câu trả lời:
+    #  - ReAct (react.py): gom nhiều bước -> _dedup_collected()
+    #  - Trả lời nhanh (simple.py FullQAPipeline): không có _dedup_collected, dùng
+    #    _last_docs (tài liệu đã rerank/lọc, do stream() lưu lại).
+    if hasattr(pipeline, "_dedup_collected"):
+        docs = pipeline._dedup_collected()
+    else:
+        docs = getattr(pipeline, "_last_docs", None) or []
+    if not docs:
+        return None
     try:
         spans = pipeline.answering_pipeline.match_evidence_with_context(answer, docs)
     except Exception:
@@ -237,7 +246,14 @@ def stream_chat(
     # yield from truyền lại return value của generator (react.stream return answer)
     answer = yield from pipeline.stream(message, conversation_id, history)
 
-    cites = build_citations(pipeline, answer)
+    # Dựng citation KHÔNG được phép làm chết stream: nếu lỗi (vd engine không có
+    # _dedup_collected) thì bỏ qua phần nguồn, vẫn để _run_stream gửi event "done".
+    try:
+        cites = build_citations(pipeline, answer)
+    except Exception:
+        import traceback
+        traceback.print_exc()
+        cites = None
     if cites:
         from .adapters.stream import CitationsPayload
         yield CitationsPayload(cites)

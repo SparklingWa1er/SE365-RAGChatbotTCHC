@@ -1,4 +1,5 @@
 import type { ReasoningMode, Turn } from "../App";
+import type { Citation } from "../api/types";
 import Composer from "./Composer";
 import MessageList from "./MessageList";
 import ModeSelect from "./ModeSelect";
@@ -8,6 +9,7 @@ interface Props {
   pendingUser: string | null;
   streamBot: string;
   streamInfo: string;
+  streamCitations: Citation[];
   streaming: boolean;
   suggestions: string[][];
   canRegen: boolean;
@@ -18,6 +20,7 @@ interface Props {
   onSend: (text: string) => void;
   onStop: () => void;
   onRegen: () => void;
+  onCitationClick: (citations: Citation[], n: number) => void;
 }
 
 export default function ChatView({
@@ -25,6 +28,7 @@ export default function ChatView({
   pendingUser,
   streamBot,
   streamInfo,
+  streamCitations,
   streaming,
   suggestions,
   canRegen,
@@ -35,6 +39,7 @@ export default function ChatView({
   onSend,
   onStop,
   onRegen,
+  onCitationClick,
 }: Props) {
   // Màn hình "new conversation": chưa có lượt nào và không đang stream.
   const isEmpty = turns.length === 0 && !pendingUser && !streaming;
@@ -82,9 +87,11 @@ export default function ChatView({
         pendingUser={pendingUser}
         streamBot={streamBot}
         streamInfo={streamInfo}
+        streamCitations={streamCitations}
         streaming={streaming}
         scrollTarget={scrollTarget}
         onScrolled={onScrolled}
+        onCitationClick={onCitationClick}
       />
 
       <Composer

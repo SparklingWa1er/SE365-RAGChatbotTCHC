@@ -23,6 +23,7 @@ export interface Turn {
   user: string;
   bot: string; // HTML (có thể chứa <a class="citation">)
   info?: string; // HTML quá trình suy luận (Thought/Action/Observation + mindmap)
+  citations?: Citation[]; // nguồn của lượt này (khôi phục panel khi mở lại)
 }
 
 export default function App() {
@@ -37,6 +38,11 @@ export default function App() {
   const [suggestions, setSuggestions] = useState<string[][]>([]);
   const [citations, setCitations] = useState<Citation[]>([]);
   const [infoHtml, setInfoHtml] = useState("");
+  // Citation 【n】 vừa được bấm trong câu trả lời → SourcesPanel mở + cuộn tới nguồn đó.
+  // nonce để cùng một số bấm lại vẫn kích hoạt lại hiệu ứng.
+  const [activeCite, setActiveCite] = useState<{ index: number; nonce: number } | null>(
+    null,
+  );
 
   // Trạng thái stream lượt hiện tại.
   const [streaming, setStreaming] = useState(false);
@@ -47,6 +53,7 @@ export default function App() {
   // (lồng setState trong updater bị StrictMode gọi 2 lần → nhân đôi lượt).
   const streamBotRef = useRef("");
   const streamInfoRef = useRef("");
+  const streamCitationsRef = useRef<Citation[]>([]);
 
   // ── Search Modal (tìm trong HỘI THOẠI HIỆN TẠI) ──
   const [searchOpen, setSearchOpen] = useState(false);
@@ -81,8 +88,14 @@ export default function App() {
           user,
           bot,
           info: d.reasoning?.[i] ?? "",
+          citations: d.citations?.[i] ?? [],
         })),
       );
+      // Khôi phục panel "Nguồn" bằng nguồn của lượt cuối (câu trả lời gần nhất).
+      const lastCitations = d.citations?.length
+        ? d.citations[d.citations.length - 1]
+        : [];
+      setCitations(lastCitations ?? []);
       setSuggestions(d.chat_suggestions?.length ? d.chat_suggestions : []);
     } catch (e) {
       console.error(e);
@@ -111,6 +124,7 @@ export default function App() {
       setStreamBot("");
       streamBotRef.current = "";
       streamInfoRef.current = "";
+      streamCitationsRef.current = [];
       setCitations([]);
       setInfoHtml("");
       setSuggestions([]);
@@ -143,9 +157,14 @@ export default function App() {
               streamInfoRef.current = html;
               setInfoHtml(html);
             },
-            onCitations: (items) => setCitations(items),
+            onCitations: (items) => {
+              streamCitationsRef.current = items;
+              setCitations(items);
+            },
             onDone: (e) => {
               setSuggestions(e.suggestions ?? []);
+              // Tên hội thoại vừa được tự đặt (lượt đầu) → cập nhật danh sách ngay.
+              if (e.name) refreshConversations();
             },
           },
           ctrl.signal,
@@ -161,13 +180,15 @@ export default function App() {
         // chốt lượt vào danh sách từ ref (không lồng setState → không nhân đôi)
         const finalBot = streamBotRef.current;
         const finalInfo = streamInfoRef.current;
+        const finalCitations = streamCitationsRef.current;
         setTurns((prev) => [
           ...prev,
-          { user: text, bot: finalBot, info: finalInfo },
+          { user: text, bot: finalBot, info: finalInfo, citations: finalCitations },
         ]);
         setStreamBot("");
         streamBotRef.current = "";
         streamInfoRef.current = "";
+        streamCitationsRef.current = [];
         setPendingUser(null);
         setStreaming(false);
         abortRef.current = null;
@@ -220,6 +241,12 @@ export default function App() {
   const pickResult = useCallback((r: SearchResult) => {
     setSearchOpen(false);
     setScrollTarget(`${r.turnIndex}-${r.role}`);
+  }, []);
+
+  // Bấm 【n】 trong một câu trả lời → nạp đúng nguồn của lượt đó vào panel + làm nổi 【n】.
+  const handleCitationClick = useCallback((cits: Citation[], n: number) => {
+    if (cits && cits.length) setCitations(cits);
+    setActiveCite({ index: n, nonce: Date.now() });
   }, []);
 
   // tiêu đề hội thoại đang chọn + đổi tên ngay trên topbar
@@ -293,6 +320,7 @@ export default function App() {
             pendingUser={pendingUser}
             streamBot={streamBot}
             streamInfo={infoHtml}
+            streamCitations={citations}
             streaming={streaming}
             suggestions={suggestions}
             canRegen={turns.length > 0 && !streaming}
@@ -303,6 +331,7 @@ export default function App() {
             onSend={send}
             onStop={stop}
             onRegen={regen}
+            onCitationClick={handleCitationClick}
           />
         )}
       </div>
@@ -311,7 +340,7 @@ export default function App() {
         onResize={(dx) => setSourcesWidth((w) => clamp(w - dx, 260, 600))}
       />
 
-      <SourcesPanel citations={citations} width={sourcesWidth} />
+      <SourcesPanel citations={citations} width={sourcesWidth} active={activeCite} />
 
       <SearchModal
         open={searchOpen}

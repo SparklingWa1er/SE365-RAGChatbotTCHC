@@ -1,268 +1,296 @@
-# Chatbot RAG hướng dẫn Thủ tục hành chính công Việt Nam
+<div align="center">
 
-Chatbot hỏi–đáp về thủ tục hành chính công, dữ liệu lấy từ
-[Cổng Dịch vụ công Quốc gia](https://dichvucong.gov.vn), xây trên nền
-[kotaemon](https://github.com/Cinnamon/kotaemon).
+# 🏛️ Chatbot RAG — Thủ tục hành chính công Việt Nam
+
+**Trợ lý hỏi–đáp về thủ tục hành chính công**, dữ liệu từ [Cổng Dịch vụ công Quốc gia](https://dichvucong.gov.vn),
+xây trên nền [kotaemon](https://github.com/Cinnamon/kotaemon) + Azure OpenAI.
+
+![Python](https://img.shields.io/badge/Python-3.10-3776AB?logo=python&logoColor=white)
+![Node](https://img.shields.io/badge/Node-%E2%89%A520-339933?logo=nodedotjs&logoColor=white)
+![React](https://img.shields.io/badge/React-19-61DAFB?logo=react&logoColor=black)
+![FastAPI](https://img.shields.io/badge/FastAPI-SSE-009688?logo=fastapi&logoColor=white)
+![Azure OpenAI](https://img.shields.io/badge/Azure_OpenAI-gpt--4o-0078D4?logo=microsoftazure&logoColor=white)
+![Platform](https://img.shields.io/badge/Platform-Windows-0078D6?logo=windows&logoColor=white)
+
+[📖 **Hướng dẫn cài đặt (trang HTML)**](docs/index.html) · [🧩 Kiến trúc](#-kiến-trúc) · [⚡ Cài đặt nhanh](#-cài-đặt-nhanh) · [🛠️ Xử lý sự cố](#️-xử-lý-sự-cố)
+
+</div>
+
+---
+
+## ✨ Tổng quan
+
+Chatbot trả lời câu hỏi về thủ tục hành chính (hồ sơ, lệ phí, trình tự, thời hạn, cơ quan thực hiện…) dựa trên
+kho **5.208 thủ tục** đã lập chỉ mục theo kiến trúc **RAG** (Retrieval-Augmented Generation). Mỗi câu trả lời có
+trích dẫn `【n】` dẫn về đúng đoạn nguồn — bấm vào là nhảy tới tài liệu gốc.
+
+> [!NOTE]
+> **Toàn bộ code nằm trong repo này** — kể cả thư viện kotaemon đã chỉnh (vendor trong `app/libs/`).
+> Clone là có đủ code, **không** phải clone kotaemon rồi copy file cấu hình. Chỉ cần: cài deps → tải index → điền `.env` → chạy.
 
 | Thành phần | Công nghệ |
 |---|---|
-| Embedding | Azure `text-embedding-3-large` (3072d) |
-| LLM | Azure OpenAI `gpt-4o` |
-| RAG framework | kotaemon (Chroma + LanceDB, hybrid retrieval) |
-| Reasoning | **ReAct Agent** (agentic, mặc định) — tự tra corpus, fallback web khi không có |
-| Web fallback | Brave Search API (tuỳ chọn, cần `BRAVE_API_KEY`) |
-
-> **Toàn bộ code nằm trong repo này** — kể cả thư viện kotaemon đã chỉnh (vendor
-> trong `app/libs/`). Clone là có đủ code, **không** phải clone kotaemon rồi copy
-> file cấu hình như trước. Chỉ cần cài deps + tải index + điền `.env`.
+| **Embedding** | Azure `text-embedding-3-large` (3072 chiều) |
+| **LLM** | Azure OpenAI `gpt-4o` |
+| **RAG framework** | kotaemon — Chroma (vector) + LanceDB (BM25), hybrid retrieval, rerank bằng LLM |
+| **Reasoning** | **ReAct Agent** (mặc định, đa bước) hoặc **Trả lời nhanh** (một lượt) |
+| **Web fallback** | Brave Search API (tuỳ chọn, cần `BRAVE_API_KEY`) |
+| **Backend / Frontend** | FastAPI (SSE) · React 19 + Vite 5 + Tailwind 4 |
 
 ---
 
-## Ví dụ truy vấn phức tạp
+## 📚 Mục lục
 
-ReAct Agent xử lý được các câu hỏi cần **nhiều bước tra cứu + suy luận**, không trả
-lời được bằng một lần tìm kiếm. Cơ chế: tách câu hỏi phức thành các câu con (planner),
-tra riêng từng câu rồi gom nguồn, kiểm chứng grounding, và tổng hợp một lần có trích
-dẫn `【n】`. Một số ví dụ đã kiểm thử (mở panel **Thông tin** bên phải để xem các bước
-Suy luận của agent):
+- [Tính năng](#-tính-năng)
+- [Ví dụ truy vấn phức tạp](#-ví-dụ-truy-vấn-phức-tạp)
+- [Kiến trúc](#-kiến-trúc)
+- [Yêu cầu](#-yêu-cầu)
+- [Cài đặt nhanh](#-cài-đặt-nhanh)
+- [Cài đặt chi tiết](#-cài-đặt-chi-tiết-máy-mới)
+- [Chạy ứng dụng](#-chạy-ứng-dụng)
+- [Chế độ suy luận](#-chế-độ-suy-luận)
+- [Xây index từ đầu](#-xây-index-từ-đầu-tuỳ-chọn)
+- [Xử lý sự cố](#️-xử-lý-sự-cố)
+
+---
+
+## 🚀 Tính năng
+
+| | Tính năng | Mô tả |
+|---|---|---|
+| 🔎 | **Hybrid retrieval** | Chroma (vector) + LanceDB (BM25), rerank bằng LLM trước khi trả lời. |
+| 🧠 | **2 chế độ suy luận** | ReAct agent đa bước (tự tra cứu, kết hợp web) hoặc Trả lời nhanh một lượt. |
+| 📌 | **Trích dẫn truy vết** | Câu trả lời chèn `【n】`; **bấm vào** → panel Nguồn mở & cuộn tới đúng tài liệu, làm nổi viền. |
+| 🧩 | **Các bước suy luận có tên** | "Tra cứu tài liệu: …", "Tìm kiếm web: …", "Tổng hợp kết quả" — không còn chỉ là id tool. |
+| 🗺️ | **Sơ đồ tư duy** | Mindmap markmap có toolbar: phóng to / vừa khung / **toàn màn hình** / tải `.svg`. |
+| 🗂️ | **Panel nguồn gọn** | Nguồn được trích dẫn hiện trực tiếp; nguồn tham khảo nhiều thì **tự thu gọn** (không tràn). |
+| 💬 | **Tiêu đề tự đặt** | Đoạn chat tự sinh tên ngắn gọn từ câu hỏi đầu tiên (LLM, có fallback). |
+| 💾 | **Lưu & khôi phục** | Suy luận + nguồn được lưu theo từng lượt; mở lại hội thoại là thấy đầy đủ. |
+| 🌐 | **Web fallback** | Khi corpus không có dữ liệu, ReAct tự tìm Brave Search và gắn nhãn 🌐 (chưa thẩm định). |
+
+---
+
+## 🎯 Ví dụ truy vấn phức tạp
+
+ReAct Agent xử lý được câu hỏi cần **nhiều bước tra cứu + suy luận**. Cơ chế: tách câu hỏi phức thành các câu con
+(planner) → tra riêng từng câu → gom nguồn, kiểm chứng grounding → tổng hợp một lần có trích dẫn `【n】`.
 
 | Câu hỏi | Khả năng minh hoạ |
 |---|---|
-| *“Tôi 16 tuổi, mất hộ chiếu cũ, muốn làm lại thì cần giấy tờ gì và **ai nộp thay** được không?”* | **Phân nhánh điều kiện** — tách 2 nhánh (giấy tờ cần + ai nộp thay), trả lời đúng theo độ tuổi: 16 > 14 nên tự nộp được, hoặc người đại diện hợp pháp ký thay. |
-| *“Để mở một **trường mầm non tư thục**, tôi phải qua những thủ tục nào, **mỗi thủ tục mất bao lâu** và **tổng chi phí** ước tính?”* | **Tổng hợp đa khía cạnh** — tách 3 khía cạnh (thủ tục / thời hạn / chi phí), tra riêng; **trung thực** nói rõ phần chi phí không có trong dữ liệu thay vì bịa. |
-| *“Làm hộ chiếu ở **Phòng QLXNC Công an TP.HCM** thì địa chỉ, giờ làm việc, số điện thoại?”* | **Web fallback** — corpus chỉ nói chung chung về cấp tỉnh → tự tìm Brave Search bổ sung chi tiết cục bộ, gắn nhãn 🌐 (nguồn web chưa thẩm định). |
-| *“**So sánh** hồ sơ và lệ phí giữa cấp hộ chiếu phổ thông **gắn chip** và **không gắn chip** điện tử?”* | **Chống so sánh giả** — nhận ra dữ liệu chỉ có một loại thủ tục, không dựng hai cột khác nhau từ cùng một bộ tài liệu (phát hiện trùng nguồn ở mức thủ tục). |
-| *“**Trường hợp nào** được làm hộ chiếu online hoàn toàn, **trường hợp nào** bắt buộc nộp trực tiếp?”* | **Phân biệt điều kiện** — tách hai vế, trình bày rõ điều kiện đủ (định danh VNeID mức 2, CCCD gắn chip…) cho từng trường hợp. |
-
-> Mỗi trích dẫn `【n】` tô sáng đúng đoạn nguồn; nguồn web gắn 🌐 để phân biệt với corpus
-> chính thống. Chi tiết kiến trúc reasoning xem `CLAUDE.md`.
+| *“Tôi 16 tuổi, mất hộ chiếu cũ, cần giấy tờ gì và **ai nộp thay** được?”* | **Phân nhánh điều kiện** — tách 2 nhánh, trả lời đúng theo độ tuổi (16 > 14 nên tự nộp được, hoặc người đại diện ký thay). |
+| *“Để mở **trường mầm non tư thục**, phải qua thủ tục nào, **mỗi thủ tục mất bao lâu**, **tổng chi phí**?”* | **Tổng hợp đa khía cạnh** — tách 3 khía cạnh, tra riêng; **trung thực** nói rõ phần không có dữ liệu thay vì bịa. |
+| *“Làm hộ chiếu ở **Phòng QLXNC CA TP.HCM** thì địa chỉ, giờ làm việc, SĐT?”* | **Web fallback** — corpus chỉ nói chung cấp tỉnh → tự tìm Brave bổ sung, gắn nhãn 🌐. |
+| *“**So sánh** hồ sơ & lệ phí hộ chiếu **gắn chip** vs **không gắn chip**?”* | **Chống so sánh giả** — nhận ra dữ liệu chỉ có một loại, không dựng hai cột khác nhau từ cùng bộ tài liệu. |
 
 ---
 
-## Cấu trúc repo
+## 🧩 Kiến trúc
+
+Sau khi cài xong, máy có **hai phần tách biệt**: repo code (git) và index dữ liệu (ngoài git, tải từ HuggingFace).
 
 ```
-.
-├── pipeline/              # ❶ Thu thập & xử lý dữ liệu → corpus (độc lập kotaemon)
-│   ├── crawler/           #    crawl.py: crawl dichvucong.gov.vn → data/raw/*.json
-│   └── parser/            #    parse.py: JSON → data/corpus/md/*.md (+ chunks.jsonl)
-│
-├── rag/                   # ❷ Code RAG của dự án (wiring kotaemon)
-│   ├── prompts.py         #    Prompt tiếng Việt (QA + viết lại truy vấn + ReAct agent)
-│   ├── agent_tools.py     #    Tool agent dự án: BraveSearchTool (web fallback)
-│   ├── flowsettings.py    #    Cấu hình kotaemon: Azure embed 3072d, lang=vi, data dir
-│   ├── ingest_corpus.py   #    Nạp corpus → vector/doc store (qua pipeline kotaemon)
-│   ├── fast_ingest.py     #    Nạp song song 10 worker (nhanh hơn, bỏ qua theflow)
-│   └── query_test.py      #    Test RAG headless (không qua UI)
-│
-├── app/                   # ❸ kotaemon đã vendor (gồm các bản vá của dự án)
-│   ├── app.py             #    Launcher Gradio
-│   └── libs/{kotaemon,ktem}
-│
-├── scripts/               # ❹ Tiện ích chia sẻ index
-│   ├── init_index.py      #    Tải + giải nén index từ HuggingFace (máy mới)
-│   ├── pack_index.py      #    Đóng gói + upload index lên HF
-│   └── gen_constraints.py
-│
-├── constraints.txt        # Pin phiên bản deps (kotaemon dùng API cũ)
-├── .env.example           # Mẫu cấu hình Azure
-└── data/                  # (gitignore) corpus + raw — tải từ HF / sinh bởi pipeline
-```
+du-an/                          ← REPO (git): code + scripts (~vài chục MB)
+├── pipeline/                   ❶ Thu thập & xử lý dữ liệu → corpus
+│   ├── crawler/crawl.py        #   dichvucong.gov.vn → data/raw/*.json
+│   └── parser/parse.py         #   JSON → data/corpus/md/*.md (+ chunks.jsonl)
+├── rag/                        ❷ Code RAG của dự án (wiring kotaemon)
+│   ├── prompts.py              #   Prompt tiếng Việt (QA / rewrite / ReAct / mindmap / title)
+│   ├── agent_tools.py          #   BraveSearchTool (web fallback)
+│   ├── flowsettings.py         #   Cấu hình kotaemon (Azure embed 3072d, lang=vi)
+│   ├── ingest_corpus.py        #   Nạp corpus → vector/doc store
+│   └── query_test.py           #   Test RAG headless
+├── app/                        ❸ kotaemon đã vendor + tầng API
+│   ├── api/                    #   FastAPI (stream SSE) — backend của UI React
+│   ├── app.py                  #   Launcher Gradio (UI phụ)
+│   └── libs/{kotaemon,ktem}    #   thư viện đã vá
+├── frontend/                   ❹ UI React (Vite + React 19 + Tailwind 4) — demo chính
+├── scripts/                    ❺ init_index.py / pack_index.py (chia sẻ index qua HF)
+├── docs/index.html             📖 Trang hướng dẫn cài đặt (mở bằng trình duyệt)
+├── .env                        ← bạn tự điền Azure key (gitignore)
+└── constraints.txt             # Pin phiên bản deps
 
-Ngoài repo: index (~1.5 GB, vectorstore + docstore) nằm ở `C:\ktem_data` (đặt qua
-`KH_APP_DATA_DIR` trong `.env`), tải sẵn từ HuggingFace — **không cần embed lại**.
-
-### Kiến trúc local sau khi clone + setup data xong
-
-Sau khi cài deps + chạy `init_index.py` (Bước 4), máy có hai phần tách biệt:
-
-```
-du-an/                         ← REPO (git): code + scripts, ~vài chục MB
-├── pipeline/ rag/ app/ scripts/ frontend/
-├── .env                       ← bạn tự điền Azure key (gitignore)
-├── .venv/                     ← Python deps (gitignore)
-└── frontend/node_modules/     ← npm deps (gitignore)
-
-C:\ktem_data\                  ← INDEX (ngoài repo): tải/giải nén từ HF, ~1.5 GB
+C:\ktem_data\                   ← INDEX (ngoài repo): tải/giải nén từ HF (~1.5 GB)
 └── user_data/
-    ├── vectorstore/<uuid>/    ← Chroma HNSW: header/data_level0/length/link_lists.bin
-    │                            (≈33k vector × 3072d → data_level0.bin ~410 MB)
-    ├── docstore/index_1.lance ← LanceDB: text các chunk + FTS index (BM25)
-    ├── files/index_1/         ← bản .md gốc đã ingest
-    └── sql.db                 ← metadata ktem (index__1__source = 5208 thủ tục;
-                                 config private=false; bảng embedding RỖNG →
-                                 tự register lại từ .env lần chạy app đầu tiên)
+    ├── vectorstore/<uuid>/     Chroma HNSW (≈33k vector × 3072 chiều)
+    ├── docstore/index_1.lance  LanceDB: text các chunk + FTS (BM25)
+    ├── files/index_1/          bản .md gốc đã ingest
+    └── sql.db                  metadata ktem (index__1__source = 5208 thủ tục)
 ```
 
-> Index trong `C:\ktem_data` **không** nằm trong git — nó đến từ HF (đóng gói bởi
-> `pack_index.py`, mở bởi `init_index.py`). Code repo và index là hai nguồn độc lập:
-> đổi quy tắc parse/chunk thì phải **re-ingest + đóng gói lại HF** mới khớp (xem dưới).
+> [!IMPORTANT]
+> Index trong `C:\ktem_data` **không** nằm trong git — nó đến từ HuggingFace (đóng gói bởi `pack_index.py`,
+> mở bởi `init_index.py`). Code repo và index là hai nguồn độc lập: đổi quy tắc parse/chunk thì phải
+> **re-ingest + đóng gói lại** mới khớp.
 
 ---
 
-## Yêu cầu
+## ✅ Yêu cầu
 
-- **Windows** (Linux chưa kiểm tra — xem lưu ý cuối)
-- **Python 3.10**
-- **[uv](https://github.com/astral-sh/uv)**: `pip install uv`
-- **Node.js ≥ 20** (kèm `npm`) — cho UI React ở `frontend/` (đã test trên Node 22 / npm 10)
+- **Windows** (Linux/HF Spaces chưa kiểm thử HNSW binary — xem [Xử lý sự cố](#️-xử-lý-sự-cố))
+- **Python 3.10** · **[uv](https://github.com/astral-sh/uv)** (`pip install uv`)
+- **Node.js ≥ 20** kèm `npm` (đã test Node 22 / npm 10)
 - **git**
-- **Tài khoản Azure OpenAI** với hai deployment: `gpt-4o` + `text-embedding-3-large`
+- **Tài khoản Azure OpenAI** với 2 deployment: `gpt-4o` + `text-embedding-3-large`
+- *(tuỳ chọn)* **Brave Search API** cho web fallback
 
 ---
 
-## Setup (máy mới)
+## ⚡ Cài đặt nhanh
 
-### Bước 1 — Clone & tạo môi trường
+> 📖 Hướng dẫn đầy đủ, có copy-code & xử lý sự cố: mở **[`docs/index.html`](docs/index.html)** bằng trình duyệt.
 
 ```powershell
-git clone <url-repo> "du-an"
-cd "du-an"
-
+# 1. Clone & môi trường ảo
+git clone <url-repo> "du-an"; cd "du-an"
 python -m venv .venv
 .venv\Scripts\python.exe -m pip install -U pip uv
-```
 
-### Bước 2 — Cài dependencies (dùng uv, KHÔNG pip — pip kẹt resolver)
-
-```powershell
+# 2. Dependencies (dùng uv — KHÔNG pip)
 .venv\Scripts\uv.exe pip install --python .venv\Scripts\python.exe `
   --constraint constraints.txt `
   -e "app/libs/kotaemon" -e "app/libs/ktem" `
   fastembed "onnxruntime<1.20" "unstructured>=0.15.8,<0.16" tabulate cachetools
+
+# 3. .env  → điền AZURE_OPENAI_* (xem mục dưới)
+copy .env.example .env
+
+# 4. Tải index đã embed từ HuggingFace (~728 MB)
+.venv\Scripts\python.exe scripts\init_index.py --hf-repo MinhTriet/dvc-rag-embeddings
+
+# 5. UI React
+cd frontend; npm install; cd ..
+
+# 6. Chạy (2 terminal) — hoặc dùng .\run-backend.ps1 / .\run-frontend.ps1
+.venv\Scripts\python.exe -m uvicorn app.api.main:app --port 8000     # Terminal 1
+cd frontend; npm run dev                                             # Terminal 2 → :5173
 ```
+
+→ Mở **http://127.0.0.1:5173**. *(Phải chạy backend trước.)*
+
+---
+
+## 🔧 Cài đặt chi tiết (máy mới)
 
 ### Bước 3 — Cấu hình `.env`
 
-```powershell
-copy .env.example .env
-# → Mở .env, điền:
-#     AZURE_OPENAI_ENDPOINT=https://<resource>.openai.azure.com/
-#     AZURE_OPENAI_API_KEY=<key>
-#     AZURE_OPENAI_CHAT_DEPLOYMENT=gpt-4o
-#     AZURE_OPENAI_EMBEDDINGS_DEPLOYMENT=text-embedding-3-large
-#   (KH_APP_DATA_DIR=C:\ktem_data đã có sẵn — KHÔNG đổi, xem lưu ý path ASCII)
-#   Tuỳ chọn (cho web fallback của ReAct agent):
-#     BRAVE_API_KEY=<key tại https://brave.com/search/api/>  # để trống = tắt web fallback
+```dotenv
+AZURE_OPENAI_ENDPOINT=https://<resource>.openai.azure.com/
+AZURE_OPENAI_API_KEY=<key>
+AZURE_OPENAI_CHAT_DEPLOYMENT=gpt-4o
+AZURE_OPENAI_EMBEDDINGS_DEPLOYMENT=text-embedding-3-large
+
+# Đã có sẵn — KHÔNG đổi (xem lưu ý path ASCII bên dưới):
+KH_APP_DATA_DIR=C:\ktem_data
+
+# Tuỳ chọn — bật web fallback cho ReAct agent (để trống = tắt):
+BRAVE_API_KEY=<key tại https://brave.com/search/api/>
 ```
 
-> **Reasoning mặc định là ReAct Agent** (agentic): tự tra corpus nội bộ trước, chỉ tìm
-> web (Brave) khi corpus không có tài liệu liên quan. Đổi engine trong UI:
-> **Settings → Reasoning → Reasoning options**. Chi tiết xem `CLAUDE.md`.
+### Bước 4 — Tải index
 
-### Bước 4 — Tải index đã embed từ HuggingFace
-
-Không cần crawl/embed lại — tải index xây sẵn (~728 MB nén) từ HF Dataset
-[`MinhTriet/dvc-rag-embeddings`](https://huggingface.co/datasets/MinhTriet/dvc-rag-embeddings)
-(file `ktem_index.tar.gz`, public — đã đồng bộ với quy tắc parse/chunk mới nhất):
+Script tải `ktem_index.tar.gz`, giải nén vào `C:\ktem_data`, rồi kiểm tra hợp lệ (số tài liệu = 5208, kích thước HNSW, trạng thái `.env`).
 
 ```powershell
-.venv\Scripts\python.exe scripts\init_index.py --hf-repo MinhTriet/dvc-rag-embeddings
+# Kiểm tra index bất kỳ lúc nào (không tải lại):
+.venv\Scripts\python.exe scripts\init_index.py --verify
+
+# Có file thủ công thay vì tải từ HF:
+.venv\Scripts\python.exe scripts\init_index.py --from C:\path\to\ktem_index.tar.gz
 ```
 
-Script tải `ktem_index.tar.gz`, giải nén vào `C:\ktem_data`, rồi kiểm tra hợp lệ
-(in số tài liệu = 5208, kích thước HNSW, trạng thái `.env`).
-Kiểm tra index bất kỳ lúc nào: `.venv\Scripts\python.exe scripts\init_index.py --verify`
+> [!TIP]
+> Script Python in tiếng Việt cần UTF-8 console: đặt `$env:PYTHONUTF8=1` trước khi chạy.
+> Các script `run-*.ps1` đã set sẵn.
 
-> **Không dùng HF?** Tải `ktem_index.tar.gz` thủ công rồi:
-> ```powershell
-> .venv\Scripts\python.exe scripts\init_index.py --from C:\path\to\ktem_index.tar.gz
-> ```
+---
 
-### Bước 5 — Cài dependencies cho UI React
+## ▶️ Chạy ứng dụng
 
-```powershell
-cd frontend
-npm install        # tải node_modules (chỉ lần đầu / khi đổi package.json)
-cd ..
-```
-
-> UI React (Vite + React 19 + Tailwind 4) gọi backend qua tầng FastAPI `app/api/`.
-> Hợp đồng API + SSE: xem `frontend/README.md` (và Swagger `:8000/docs` khi chạy backend).
-
-### Bước 6 — Chạy demo (UI React = demo chính)
-
-Demo chính là **UI React**, cần chạy **2 tiến trình song song** (mỗi cái một terminal,
-đều chạy từ gốc repo):
+Demo chính là **UI React**, cần **2 tiến trình song song** (mỗi cái một terminal, từ gốc repo):
 
 ```powershell
-# Terminal 1 — Backend API (FastAPI), từ gốc repo
-.venv\Scripts\python.exe -m uvicorn app.api.main:app --port 8000
-#   Swagger để kiểm tra endpoint: http://127.0.0.1:8000/docs
-
-# Terminal 2 — Frontend (Vite dev server)
-cd frontend
-npm run dev                                    # → http://127.0.0.1:5173
-```
-
-Mở **http://127.0.0.1:5173** để dùng chatbot. Vite tự proxy `/api` → `http://127.0.0.1:8000`
-(không lo CORS). **Phải chạy backend trước** rồi mới tới frontend.
-
-**Bản host LAN** (cho máy khác trong mạng truy cập) — build tĩnh rồi serve:
-
-```powershell
-# Terminal 1 — vẫn cần backend chạy
+# Terminal 1 — Backend API (FastAPI) · Swagger: http://127.0.0.1:8000/docs
 .venv\Scripts\python.exe -m uvicorn app.api.main:app --port 8000
 
-# Terminal 2 — build + preview (host:true, port 4173, có proxy /api riêng)
+# Terminal 2 — Frontend (Vite dev) → http://127.0.0.1:5173
 cd frontend
-npm run build
-npm run preview                                # → http://<IP-máy>:4173
+npm run dev
 ```
 
-> Sau khi **ingest lại** corpus, phải **restart uvicorn** để nạp lại vector store vào RAM.
+Vite tự proxy `/api` → `:8000` (không lo CORS). **Phải chạy backend trước.**
 
-### (Phụ) UI Gradio + test headless
-
-Gradio chỉ là UI phụ để debug nhanh; demo chính dùng React ở trên.
+<details>
+<summary><b>Bản host LAN (build tĩnh, cho máy khác truy cập)</b></summary>
 
 ```powershell
-# UI Gradio (1 tiến trình, không cần API/FE)
-.venv\Scripts\python.exe app\app.py            # → http://localhost:7860
+# Terminal 1 — vẫn cần backend
+.venv\Scripts\python.exe -m uvicorn app.api.main:app --port 8000
+# Terminal 2 — build + preview (port 4173)
+cd frontend; npm run build; npm run preview      # → http://<IP-máy>:4173
+```
+Bản `preview` (đã build) nhanh hơn `npm run dev` nhiều (dev có StrictMode render gấp đôi + chưa minify).
+</details>
 
-# Test RAG không qua UI
+<details>
+<summary><b>UI Gradio & test headless (phụ)</b></summary>
+
+```powershell
+.venv\Scripts\python.exe app\app.py                                  # Gradio → :7860
 .venv\Scripts\python.exe rag\query_test.py "Hồ sơ đăng ký khai sinh gồm những gì?"
 ```
+</details>
 
-> Các entry script tự thêm gốc repo vào `sys.path`, không cần set `PYTHONPATH`.
+> [!NOTE]
+> `uvicorn` không bật `--reload`: sửa code backend hoặc **ingest lại corpus** → phải **restart uvicorn** để nạp lại vector store vào RAM.
 
 ---
 
-## Xây index từ đầu (tuỳ chọn — crawl + embed)
+## 🧠 Chế độ suy luận
+
+Chọn ngay ở màn hình hội thoại mới (hoặc **Settings → Reasoning**):
+
+| Chế độ | Engine | Khi nào dùng |
+|---|---|---|
+| ✨ **Suy luận sâu** *(mặc định)* | `ReAct` | Câu hỏi phức tạp, nhiều bước, so sánh, kết hợp web. Tách câu hỏi con → tra riêng → tổng hợp có trích dẫn. |
+| ⚡ **Trả lời nhanh** | `simple` | Câu hỏi đơn, một lượt tra cứu, gọn nhẹ. |
+
+---
+
+## 🏗️ Xây index từ đầu (tuỳ chọn)
 
 ```powershell
-# 1. Crawl  → data/raw/*.json (~5208 thủ tục)
-.venv\Scripts\python.exe pipeline\crawler\crawl.py
-
-# 2. Parse  → data/corpus/md/*.md
-.venv\Scripts\python.exe pipeline\parser\parse.py
-
-# 3. Ingest → C:\ktem_data  (≈2.5h kiểu thường, hoặc dùng fast_ingest 10 worker)
-$env:PYTHONUNBUFFERED=1
-.venv\Scripts\python.exe rag\ingest_corpus.py
-#   hoặc nhanh hơn:
-.venv\Scripts\python.exe rag\fast_ingest.py --workers 10
-
-# 4. Đóng gói + chia sẻ
-.venv\Scripts\python.exe scripts\pack_index.py --hf-repo MinhTriet/dvc-rag-embeddings --hf-token hf_xxx
+.venv\Scripts\python.exe pipeline\crawler\crawl.py            # 1. Crawl  → data/raw/*.json (~5208)
+.venv\Scripts\python.exe pipeline\parser\parse.py             # 2. Parse  → data/corpus/md/*.md
+.venv\Scripts\python.exe rag\fast_ingest.py --workers 10      # 3. Ingest → C:\ktem_data (song song)
+.venv\Scripts\python.exe scripts\pack_index.py --hf-repo MinhTriet/dvc-rag-embeddings --hf-token hf_xxx   # 4. Đóng gói + chia sẻ
 ```
 
 ---
 
-## Lưu ý quan trọng
+## 🛠️ Xử lý sự cố
 
-**⚠️ Path phải ASCII (Windows):** `.env` đặt `KH_APP_DATA_DIR=C:\ktem_data`. Nếu để
-index trong thư mục có tên tiếng Việt, `hnswlib` không tạo được file `.bin` — toàn bộ
-vector mất sau ingest mà **không báo lỗi**. Giữ nguyên `C:\ktem_data`.
+> [!WARNING]
+> **Đường dẫn phải ASCII (Windows).** Giữ `KH_APP_DATA_DIR=C:\ktem_data`. Nếu index nằm trong thư mục tên
+> tiếng Việt, `hnswlib` không tạo được file `.bin` → **toàn bộ vector mất sau ingest mà không báo lỗi**.
 
-**⚠️ Không force-kill tiến trình ingest:** nếu treo sau khi kill, xóa theflow cache:
-```powershell
-Remove-Item -Recurse -Force "$env:TEMP\claude\theflow_$env:USERNAME"
-```
+| Triệu chứng | Khắc phục |
+|---|---|
+| `UnicodeEncodeError` / `charmap` khi chạy script | Console cp1252 — đặt `$env:PYTHONUTF8=1`. |
+| Frontend báo lỗi gọi máy chủ / trắng trang | Chưa chạy backend hoặc sai thứ tự. Mở `:8000/docs` kiểm tra trước. |
+| Câu trả lời không đổi sau khi ingest lại | Restart `uvicorn` để nạp lại vector store. |
+| Sửa code backend không có tác dụng | `uvicorn` không bật `--reload` → restart tiến trình. |
+| Tiến trình ingest treo sau khi kill | `Remove-Item -Recurse -Force "$env:TEMP\claude\theflow_$env:USERNAME"` |
+| Chuyển hội thoại thấy chậm | Dev server chậm hơn bản build; dùng `npm run build && npm run preview` để đánh giá thật. |
 
-**Bản vá kotaemon nằm trong `app/libs/`** (đã commit): `private=false` lưu trong index;
-vá FTS LanceDB (`lancedb.py`) chống Rust panic; prompt tiếng Việt tách ra `rag/prompts.py`.
-Vì vendor sẵn nên clone máy mới **không tái phát** các lỗi này.
+> [!NOTE]
+> **Bản vá kotaemon nằm trong `app/libs/`** (đã commit): `private=false` lưu trong index; vá FTS LanceDB chống
+> Rust panic; prompt tiếng Việt tách ra `rag/prompts.py`. Vì vendor sẵn nên clone máy mới **không tái phát** các lỗi này.
+>
+> **Linux / HF Spaces:** HNSW binary chưa kiểm thử cross-platform. Deploy Linux cần đặt `KH_APP_DATA_DIR=/ktem_data`
+> và kiểm tra file `.bin` đọc được.
 
-**Linux / HF Spaces:** HNSW binary chưa kiểm tra cross-platform. Deploy Linux cần
-đặt `KH_APP_DATA_DIR=/ktem_data` và kiểm tra `.bin` đọc được không.
+---
+
+<div align="center">
+<sub>Dữ liệu thuộc Cổng Dịch vụ công Quốc gia — dùng cho mục đích học tập/nghiên cứu · Xây trên <a href="https://github.com/Cinnamon/kotaemon">kotaemon</a></sub>
+</div>

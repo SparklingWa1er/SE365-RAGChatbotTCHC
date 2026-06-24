@@ -591,7 +591,7 @@ class ReactAgentPipeline(BaseReasoning):
                     activeNode:
                         placement: center
                     initialExpandLevel: 4
-                    maxWidth: 200
+                    maxWidth: 320
                 ---
                 {}
                 </script>
@@ -699,14 +699,39 @@ class ReactAgentPipeline(BaseReasoning):
             )
             yield from without_citation
 
+    # Nhãn tiếng Việt cho từng tool — để tiêu đề bước có "tên" rõ nghĩa thay vì id tool.
+    _TOOL_LABELS = {
+        "docsearch": "Tra cứu tài liệu",
+        "web_search": "Tìm kiếm web",
+    }
+
+    @classmethod
+    def _step_title(cls, step, is_thinking: bool) -> str:
+        """Tên ngắn gọn cho một bước suy luận: hành động + truy vấn (nếu có)."""
+        if not is_thinking:
+            return "Tổng hợp kết quả"
+        tool = (getattr(step, "tool", "") or "").strip()
+        label = cls._TOOL_LABELS.get(tool, tool or "Suy luận")
+        # Lấy truy vấn từ "Action Input:" trong log (đó là "tên" thực chất của bước).
+        log = getattr(step, "log", "") or ""
+        m = re.search(r"Action Input:\s*(.+)", log)
+        query = m.group(1).strip().strip('"“”').strip() if m else ""
+        query = query.splitlines()[0].strip() if query else ""
+        if query:
+            if len(query) > 70:
+                query = query[:70].rstrip() + "…"
+            return f"{label}: {query}"
+        return label
+
     def prepare_citation(self, step_id, step, output, status, header_prefix="") -> Document:
-        # Tiêu đề GỌN: "Bước N" (+ tên tool nếu đang gọi tool). header_prefix gắn nhãn
+        # Tiêu đề có TÊN bước: "Bước N · <hành động>: <truy vấn>". header_prefix gắn nhãn
         # câu hỏi con khi đã fan-out (vd "[2/3] "). Chi tiết nằm trong content, mặc định
         # ĐÓNG — click mới bung ra.
         is_thinking = status == "thinking"
-        header = "{p}<b>Bước {id}</b>".format(p=header_prefix, id=step_id)
-        if is_thinking and step.tool:
-            header += " · <i>{tool}</i>".format(tool=step.tool)
+        title = self._step_title(step, is_thinking)
+        header = "{p}<b>Bước {id}</b> · {title}".format(
+            p=header_prefix, id=step_id, title=html.escape(title)
+        )
 
         parts = []
         # Suy nghĩ/Action của agent (step.log đã chứa "Action/Action Input"); giữ xuống dòng.

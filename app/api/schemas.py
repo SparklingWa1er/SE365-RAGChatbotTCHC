@@ -43,6 +43,7 @@ class ConversationDetail(BaseModel):
     chat_suggestions: list[list[str]]
     selected: dict = Field(default_factory=dict)
     reasoning: list[str] = Field(default_factory=list)  # HTML suy luận theo từng lượt
+    citations: list[list[dict]] = Field(default_factory=list)  # nguồn theo từng lượt
 
 
 class SuggestRequest(BaseModel):

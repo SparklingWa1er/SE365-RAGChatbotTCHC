@@ -1,6 +1,8 @@
-import { useEffect, useMemo } from "react";
+import { useCallback, useEffect, useMemo } from "react";
+import type { MouseEvent as ReactMouseEvent } from "react";
 import { Landmark } from "lucide-react";
 import type { Turn } from "../App";
+import type { Citation } from "../api/types";
 import { mdToHtml } from "../lib/markdown";
 import { extractReasoning } from "../lib/reasoning";
 import Mindmap from "./Mindmap";
@@ -20,9 +22,11 @@ interface Props {
   pendingUser: string | null; // câu hỏi lượt đang stream
   streamBot: string; // HTML bot tích luỹ của lượt đang stream
   streamInfo: string; // HTML suy luận tích luỹ của lượt đang stream
+  streamCitations: Citation[]; // nguồn của lượt đang stream (cho click 【n】)
   streaming: boolean;
   scrollTarget: string | null; // "<turnIndex>-user" | "<turnIndex>-bot" (từ Search Modal)
   onScrolled: () => void;
+  onCitationClick: (citations: Citation[], n: number) => void;
 }
 
 // Conversation (use-stick-to-bottom) tự auto-scroll + nút cuộn xuống đáy.
@@ -31,9 +35,11 @@ export default function MessageList({
   pendingUser,
   streamBot,
   streamInfo,
+  streamCitations,
   streaming,
   scrollTarget,
   onScrolled,
+  onCitationClick,
 }: Props) {
   const empty = turns.length === 0 && pendingUser === null;
 
@@ -73,6 +79,8 @@ export default function MessageList({
                 user={t.user}
                 bot={t.bot}
                 info={t.info ?? ""}
+                citations={t.citations ?? []}
+                onCitationClick={onCitationClick}
               />
             ))}
             {pendingUser !== null && (
@@ -81,7 +89,9 @@ export default function MessageList({
                 user={pendingUser}
                 bot={streamBot}
                 info={streamInfo}
+                citations={streamCitations}
                 streaming={streaming}
+                onCitationClick={onCitationClick}
               />
             )}
           </>
@@ -97,13 +107,17 @@ function Exchange({
   user,
   bot,
   info,
+  citations,
   streaming,
+  onCitationClick,
 }: {
   index: number;
   user: string;
   bot: string;
   info: string;
+  citations: Citation[];
   streaming?: boolean;
+  onCitationClick: (citations: Citation[], n: number) => void;
 }) {
   // Câu trả lời bot là markdown (có HTML citation inline) — dịch sang HTML rồi mới sanitize.
   const botHtml = useMemo(() => mdToHtml(bot), [bot]);
@@ -116,6 +130,24 @@ function Exchange({
   const isStreaming = !!streaming;
   const waiting = isStreaming && !bot; // đang suy luận, chưa có câu trả lời
 
+  // Bấm vào 【n】 trong câu trả lời → mở nguồn tương ứng ở panel phải.
+  // Anchor do backend chèn: <a class="citation" id="mark-3">【3】</a>.
+  const onAnswerClick = useCallback(
+    (e: ReactMouseEvent<HTMLDivElement>) => {
+      const a = (e.target as HTMLElement).closest("a.citation");
+      if (!a) return;
+      e.preventDefault();
+      const id = a.getAttribute("id") || "";
+      const text = a.textContent || "";
+      const n = parseInt(
+        id.replace(/[^0-9]/g, "") || text.replace(/[^0-9]/g, ""),
+        10,
+      );
+      if (!Number.isNaN(n)) onCitationClick(citations, n);
+    },
+    [citations, onCitationClick],
+  );
+
   return (
     <>
       <Message from="user" id={`msg-${index}-user`} className="scroll-mt-4">
@@ -124,10 +156,16 @@ function Exchange({
         </MessageContent>
       </Message>
       <Message from="assistant" id={`msg-${index}-bot`} className="scroll-mt-4">
-        <MessageContent>
+        <MessageContent className="w-full">
           <ReasoningBlock html={reasoningHtml} streaming={isStreaming} />
           {bot ? (
-            <SafeHtml className="prose prose-sm max-w-none" html={botHtml} />
+            // Khung chứa câu trả lời — tách bạch rõ với câu hỏi (bong bóng người dùng).
+            <div
+              onClick={onAnswerClick}
+              className="rounded-2xl border border-border bg-card px-4 py-3 shadow-sm"
+            >
+              <SafeHtml className="prose prose-sm max-w-none" html={botHtml} />
+            </div>
           ) : (
             // Chưa có câu trả lời: nếu dropdown suy luận đang chạy thì nó đã báo
             // tiến trình ("Đang suy luận…"), khỏi cần shimmer thứ hai. Chỉ hiện
@@ -137,7 +175,7 @@ function Exchange({
           {mindmaps.map((md, i) => (
             <div
               key={i}
-              className="mt-3 overflow-hidden rounded-md border border-border"
+              className="mt-3 overflow-hidden rounded-xl border border-border"
             >
               <div className="border-b border-border bg-muted px-2 py-1 text-xs font-medium text-muted-foreground">
                 Sơ đồ tư duy

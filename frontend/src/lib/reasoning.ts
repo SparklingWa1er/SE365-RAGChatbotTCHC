@@ -11,9 +11,25 @@ export interface ExtractedReasoning {
   mindmaps: string[]; // markdown markmap để <Mindmap> render
 }
 
+// Cache theo chuỗi html: info của một lượt đã chốt là BẤT BIẾN, nhưng khi đổi hội
+// thoại / StrictMode double-render / re-render, cùng html sẽ bị parse lại nhiều lần
+// (DOMParser trên ~60KB rất tốn). Cache giúp chuyển hội thoại mượt hơn.
+const _cache = new Map<string, ExtractedReasoning>();
+const _CACHE_MAX = 80;
+
 export function extractReasoning(html: string): ExtractedReasoning {
   if (!html || !html.trim()) return { reasoningHtml: "", mindmaps: [] };
 
+  const hit = _cache.get(html);
+  if (hit) return hit;
+
+  const result = _extract(html);
+  if (_cache.size >= _CACHE_MAX) _cache.clear(); // bounded, đơn giản
+  _cache.set(html, result);
+  return result;
+}
+
+function _extract(html: string): ExtractedReasoning {
   const doc = new DOMParser().parseFromString(html, "text/html");
 
   // 1. Tách mindmap (div.markmap > script) rồi gỡ toàn bộ collapsible bọc nó.
