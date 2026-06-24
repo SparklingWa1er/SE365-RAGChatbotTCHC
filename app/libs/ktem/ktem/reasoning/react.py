@@ -28,6 +28,7 @@ from kotaemon.base import (
     Document,
     HumanMessage,
     Node,
+    RetrievedDocument,
     SystemMessage,
 )
 from kotaemon.indices.qa.citation_qa import CONTEXT_RELEVANT_WARNING_SCORE
@@ -480,7 +481,15 @@ class ReactAgentPipeline(BaseReasoning):
                     continue
                 got = DS.get(chunk_ids)
                 if got:
-                    return list(got)
+                    # DS.get() trả Document THƯỜNG (không có .score) — render panel nguồn
+                    # (Render.collapsible_with_header_score) đọc doc.score nên sẽ AttributeError.
+                    # Bọc thành RetrievedDocument với score=-1.0 (sentinel "full-text search",
+                    # render đã hiểu sẵn). Giữ nguyên nếu vốn đã là RetrievedDocument.
+                    return [
+                        d if isinstance(d, RetrievedDocument)
+                        else RetrievedDocument(d, score=-1.0)
+                        for d in got
+                    ]
             except Exception:
                 continue
         return []
