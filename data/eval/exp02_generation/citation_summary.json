@@ -1,0 +1,47 @@
+{
+  "n": 56,
+  "engine": "ReAct",
+  "overall": {
+    "citation_recall": 0.7424606149752347,
+    "citation_precision": 0.7247137013949879,
+    "citation_f1": 0.7334798250147748,
+    "avg_uncited_claim": 4.071428571428571
+  },
+  "by_q_type": {
+    "factual_lookup": {
+      "citation_recall": 0.7740384615384616,
+      "citation_precision": 0.7844551282051282,
+      "n": 8
+    },
+    "paraphrase": {
+      "citation_recall": 0.5566242784992785,
+      "citation_precision": 0.4958603896103896,
+      "n": 8
+    },
+    "scenario": {
+      "citation_recall": 0.7196840196840196,
+      "citation_precision": 0.7196840196840196,
+      "n": 8
+    },
+    "aspect_hoso": {
+      "citation_recall": 0.7625000000000001,
+      "citation_precision": 0.7416666666666667,
+      "n": 8
+    },
+    "aspect_phi_dk": {
+      "citation_recall": 0.9375,
+      "citation_precision": 0.9375,
+      "n": 8
+    },
+    "keyword_short": {
+      "citation_recall": 0.849863951837636,
+      "citation_precision": 0.849863951837636,
+      "n": 8
+    },
+    "manual_inscope": {
+      "citation_recall": 0.5913194444444444,
+      "citation_precision": 0.5427083333333332,
+      "n": 8
+    }
+  }
+}

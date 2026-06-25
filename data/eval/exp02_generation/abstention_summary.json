@@ -1,0 +1,9 @@
+{
+  "n": 64,
+  "engine": "ReAct",
+  "n_out_of_scope": 8,
+  "n_in_scope": 56,
+  "oos_abstention_rate": 1.0,
+  "oos_over_answer_rate": 0.0,
+  "inscope_answer_rate": 0.9642857142857143
+}

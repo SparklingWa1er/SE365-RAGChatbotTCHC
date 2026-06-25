@@ -1,0 +1,21 @@
+id,q_type,linh_vuc,primary_ma_thu_tuc,_first_rank,rr,ndcg@10,recall@5,hit@1,hit@3,hit@5,hit@10,question
+manual-000,manual_inscope,Hộ tịch,1.001193,1,1.0,1.0,1.0,1.0,1.0,1.0,1.0,"Vợ chồng tôi mới sinh em bé, giờ phải đi làm giấy khai sinh ở đâu và mang theo gì?"
+manual-001,manual_inscope,Hộ tịch,1.000894,1,1.0,1.0,1.0,1.0,1.0,1.0,1.0,"Tụi mình chuẩn bị cưới, muốn ra phường đăng ký kết hôn thì thủ tục thế nào?"
+manual-002,manual_inscope,"Đăng ký, quản lý cư trú",1.004222,1,1.0,1.0,1.0,1.0,1.0,1.0,1.0,"Tôi mới mua nhà và chuyển sang quận khác, làm sao để nhập hộ khẩu về chỗ ở mới?"
+manual-003,manual_inscope,"Đăng ký, quản lý cư trú",1.002755,1,1.0,1.0,1.0,1.0,1.0,1.0,1.0,"Giấy tạm trú của tôi sắp hết hạn, muốn gia hạn thêm thì làm thế nào?"
+manual-004,manual_inscope,Quản lý xuất nhập cảnh,1.010386,2,0.5,0.6309297535714575,1.0,0.0,1.0,1.0,1.0,"Tôi lỡ làm mất hộ chiếu, giờ phải đi trình báo ở đâu?"
+manual-005,manual_inscope,"Cấp, quản lý căn cước",1.014064,2,0.5,0.6309297535714575,1.0,0.0,1.0,1.0,1.0,"Thẻ căn cước của tôi bị hỏng, muốn làm lại cái mới thì sao?"
+manual-006,manual_inscope,Hộ tịch,1.005461,3,0.3333333333333333,0.5,1.0,0.0,1.0,1.0,1.0,"Trước đây gia đình quên đăng ký khai tử cho ông, giờ muốn đăng ký lại có được không?"
+manual-007,manual_inscope,Thành lập và hoạt động doanh nghiệp (hộ kinh doanh),1.001612,2,0.5,0.6309297535714575,1.0,0.0,1.0,1.0,1.0,"Tôi muốn mở một quán cà phê nhỏ, cần đăng ký hộ kinh doanh như thế nào?"
+manual-008,manual_inscope,Hộ tịch,1.004837,2,0.5,0.6309297535714575,1.0,0.0,1.0,1.0,1.0,"Cháu tôi mồ côi cha mẹ, tôi muốn làm người giám hộ hợp pháp thì thủ tục ra sao?"
+manual-009,manual_inscope,Hộ tịch,2.000698,1,1.0,1.0,1.0,1.0,1.0,1.0,1.0,"Tòa đã xử cho tôi ly hôn xong, giờ cần ghi vào sổ hộ tịch thì làm gì?"
+manual-010,manual_inscope,Nuôi con nuôi,2.001263,1,1.0,1.0,1.0,1.0,1.0,1.0,1.0,"Hai vợ chồng tôi muốn nhận một bé trong nước làm con nuôi, thủ tục thế nào?"
+manual-011,manual_inscope,"Sát hạch, cấp giấy phép lái xe",3.000347,0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,"Bằng lái xe của tôi sắp hết hạn, muốn đổi bằng mới thì làm ở đâu?"
+manual-012,manual_inscope,"Đăng ký, quản lý phương tiện giao thông cơ giới, xe máy chuyên dùng",1.013083,1,1.0,1.0,1.0,1.0,1.0,1.0,1.0,Tôi muốn đăng ký xe tạm thời online trên cổng dịch vụ công thì làm thế nào?
+manual-013,manual_inscope,"Đăng ký, quản lý cư trú",1.003677,3,0.3333333333333333,0.5,1.0,0.0,1.0,1.0,1.0,"Tôi sắp đi làm xa nhà mấy tháng, có cần khai báo tạm vắng không và làm sao?"
+manual-014,manual_inscope,Hộ tịch,1.001193,1,1.0,1.0,1.0,1.0,1.0,1.0,1.0,Đăng ký khai sinh cho con có mất lệ phí không?
+manual-015,manual_inscope,Hộ tịch,1.000894,2,0.5,0.6309297535714575,1.0,0.0,1.0,1.0,1.0,Đăng ký kết hôn cần mang theo những giấy tờ gì?
+manual-016,manual_inscope,Thành lập và hoạt động doanh nghiệp (hộ kinh doanh),1.001612,9,0.1111111111111111,0.3010299956639812,0.0,0.0,0.0,0.0,1.0,đăng ký hộ kinh doanh cá thể
+manual-017,manual_inscope,"Cấp, quản lý căn cước",1.014064,2,0.5,0.6309297535714575,1.0,0.0,1.0,1.0,1.0,làm lại thẻ căn cước bị mất
+manual-018,manual_inscope,"Đăng ký, quản lý cư trú",1.004222,1,1.0,1.0,1.0,1.0,1.0,1.0,1.0,Muốn đăng ký thường trú vào nhà đang thuê thì cần điều kiện gì?
+manual-019,manual_inscope,"Sát hạch, cấp giấy phép lái xe",3.000347,1,1.0,1.0,1.0,1.0,1.0,1.0,1.0,đổi giấy phép lái xe quá hạn

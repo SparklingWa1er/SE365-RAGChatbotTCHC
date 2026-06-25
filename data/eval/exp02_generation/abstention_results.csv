@@ -1,0 +1,65 @@
+id,q_type,is_oos,label,correct,question
+factual_lookup-000,factual_lookup,False,substantive,True,Thời hạn cấp giấy phép triển lãm là bao lâu kể từ ngày nhận đủ hồ sơ hợp lệ?
+factual_lookup-001,factual_lookup,False,substantive,True,Thủ tục thay đổi tên gọi của chi nhánh tổ chức hòa giải thương mại nước ngoài tại Việt Nam được thực hiện như thế nào?
+factual_lookup-002,factual_lookup,False,substantive,True,Thời hạn cấp lại chứng chỉ hành nghề môi giới bất động sản là bao lâu?
+factual_lookup-003,factual_lookup,False,substantive,True,Trình tự thực hiện xét trợ cấp đối với người hoạt động kháng chiến bị nhiễm chất độc hóa học đang công tác trong Công an nhân dân như thế nào?
+factual_lookup-004,factual_lookup,False,substantive,True,Thời hạn Sở Nội vụ kiểm tra và trình Chủ tịch Ủy ban nhân dân cấp tỉnh thu hồi giấy phép là bao lâu?
+factual_lookup-005,factual_lookup,False,substantive,True,Thời hạn thẩm định hình thức đơn đăng ký kiểu dáng công nghiệp là bao lâu?
+factual_lookup-006,factual_lookup,False,substantive,True,Thời hạn giải quyết hồ sơ cấp lại Giấy phép sử dụng vật liệu nổ công nghiệp là bao lâu?
+factual_lookup-007,factual_lookup,False,substantive,True,"Thời hạn cấp Giấy chứng nhận cung cấp dịch vụ bù trừ, thanh toán giao dịch chứng khoán phái sinh là bao lâu?"
+paraphrase-000,paraphrase,False,substantive,True,"Làm sao để đưa xe ô tô, xe máy đã nhập khẩu tạm thời ra khỏi Việt Nam?"
+paraphrase-001,paraphrase,False,substantive,True,Làm sao để được phép thiết kế và xây dựng nút giao thông nối với đường địa phương?
+paraphrase-002,paraphrase,False,substantive,True,Làm sao để được hỗ trợ lãi suất khi vay tiền cho dự án khoa học và công nghệ?
+paraphrase-003,paraphrase,False,substantive,True,Làm sao để gia hạn thời gian tạm trú cho người nước ngoài đã có giấy miễn thị thực?
+paraphrase-004,paraphrase,False,substantive,True,Làm sao để nhận trợ cấp một lần cho người từng tham gia kháng chiến chống Mỹ mà chưa được hưởng chế độ?
+paraphrase-005,paraphrase,False,substantive,True,Làm sao để gửi trả lại hàng hóa đã tạm nhập?
+paraphrase-006,paraphrase,False,substantive,True,Làm sao để được phép thiết kế và xây dựng nút giao thông nối vào đường tỉnh hoặc đường đô thị do Sở Xây dựng quản lý?
+paraphrase-007,paraphrase,False,substantive,True,Làm sao để xác nhận cho cán bộ quân đội đã nghỉ hưu bị bệnh nặng?
+scenario-000,scenario,False,abstain,False,"Tôi là đại diện của một tổ chức nghiên cứu nước ngoài và chúng tôi muốn mở một văn phòng đại diện tại Việt Nam, tôi cần làm gì để thực hiện điều này?"
+scenario-001,scenario,False,substantive,True,"Tôi là giám đốc một công ty truyền thông và chúng tôi đang có kế hoạch mở rộng dịch vụ phát thanh, truyền hình, vậy tôi cần làm gì để được phép sử dụng tần số và thiết bị vô tuyến điện cho các thiết bị này?"
+scenario-002,scenario,False,substantive,True,"Tôi là đại diện của một tổ chức nước ngoài muốn khai thác cơ sở cung cấp dịch vụ bảo đảm hoạt động bay tại Việt Nam, tôi cần phải làm gì để được cấp phép?"
+scenario-003,scenario,False,substantive,True,"Tôi đang có một dự án xây dựng gần khu vực công trình thủy lợi và cần xác định rõ ranh giới bảo vệ của công trình này, vậy tôi phải làm gì để được phê duyệt phương án và cắm mốc chỉ giới?"
+scenario-004,scenario,False,substantive,True,"Tôi vừa mua một căn hộ trong một dự án bất động sản và muốn biết quy trình để đăng ký quyền sở hữu căn hộ này, tôi cần phải làm gì?"
+scenario-005,scenario,False,abstain,False,"Tôi là giám đốc một công ty hàng không và hiện tại chúng tôi đang có kế hoạch khai thác một sân bay mới, vậy tôi cần phải làm gì để được phép khai thác sân bay này?"
+scenario-006,scenario,False,substantive,True,"Tôi là một nông dân đang muốn nâng cấp máy móc và thiết bị để cải thiện quy trình sản xuất và bảo quản sản phẩm nông nghiệp của mình, vậy tôi cần phải làm gì để nhận được sự hỗ trợ từ nhà nước?"
+scenario-007,scenario,False,substantive,True,"Tôi là giám đốc một công ty thực phẩm có vốn đầu tư nước ngoài, hiện tại giấy phép chỉ định cơ sở kiểm nghiệm thực phẩm của chúng tôi sắp hết hạn, tôi cần làm gì để gia hạn?"
+aspect_hoso-000,aspect_hoso,False,substantive,True,Thủ tục hủy tài khoản điện tử cần chuẩn bị những giấy tờ gì?
+aspect_hoso-001,aspect_hoso,False,substantive,True,"Thủ tục chia, tách; sáp nhập; hợp nhất hội cần những giấy tờ gì?"
+aspect_hoso-002,aspect_hoso,False,substantive,True,Thủ tục thuê nhà ở thương mại làm nhà ở công vụ cần những giấy tờ gì?
+aspect_hoso-003,aspect_hoso,False,substantive,True,Thủ tục khai thuế giá trị gia tăng đối với phương pháp khấu trừ thuế cần những giấy tờ gì?
+aspect_hoso-004,aspect_hoso,False,substantive,True,Thủ tục đăng ký thay đổi người đại diện nhóm sinh hoạt tôn giáo tập trung của người nước ngoài cư trú hợp pháp tại Việt Nam cần những giấy tờ gì?
+aspect_hoso-005,aspect_hoso,False,substantive,True,Thành phần hồ sơ cần chuẩn bị cho thủ tục xét công nhận liệt sỹ gồm những giấy tờ gì?
+aspect_hoso-006,aspect_hoso,False,substantive,True,"Thủ tục cấp giấy phép làm bản sao di vật, cổ vật cần những giấy tờ gì?"
+aspect_hoso-007,aspect_hoso,False,substantive,True,Thủ tục kiểm tra hóa đơn kiêm tờ khai hoàn thuế giá trị gia tăng và hàng hóa cần những giấy tờ gì?
+aspect_phi_dk-000,aspect_phi_dk,False,substantive,True,Điều kiện để đăng ký tài khoản điện tử trong lĩnh vực Quản lý xuất nhập cảnh là gì?
+aspect_phi_dk-001,aspect_phi_dk,False,substantive,True,"Lệ phí để cấp lại giấy phép, năng định nhân viên bảo đảm hoạt động bay là bao nhiêu?"
+aspect_phi_dk-002,aspect_phi_dk,False,substantive,True,Điều kiện để được cấp Giấy phép trang bị vũ khí quân dụng là gì?
+aspect_phi_dk-003,aspect_phi_dk,False,substantive,True,Lệ phí gia hạn giấy phép hoạt động của tổ chức con nuôi nước ngoài tại Việt Nam là bao nhiêu?
+aspect_phi_dk-004,aspect_phi_dk,False,substantive,True,Lệ phí để đăng ký cấp Giấy chứng nhận đủ điều kiện kinh doanh dịch vụ kế toán cho Chi nhánh doanh nghiệp kế toán nước ngoài tại Việt Nam là bao nhiêu?
+aspect_phi_dk-005,aspect_phi_dk,False,substantive,True,"Thủ tục cấp, bổ sung, gia hạn, cấp lại, cấp đổi giấy phép hoạt động đo đạc và bản đồ cấp Trung ương có lệ phí như thế nào?"
+aspect_phi_dk-006,aspect_phi_dk,False,substantive,True,Điều kiện để thay đổi nội dung đăng ký hoạt động của chi nhánh doanh nghiệp đấu giá tài sản là gì?
+aspect_phi_dk-007,aspect_phi_dk,False,substantive,True,Điều kiện để được cấp lại Giấy chứng nhận đủ điều kiện kinh doanh dịch vụ xử lý dữ liệu cá nhân là gì?
+keyword_short-000,keyword_short,False,substantive,True,chuyển nhượng dự án bảo lãnh
+keyword_short-001,keyword_short,False,substantive,True,kiểm tra chất lượng hàng nhập khẩu
+keyword_short-002,keyword_short,False,substantive,True,thí điểm khám chữa bệnh từ xa
+keyword_short-003,keyword_short,False,substantive,True,kiểm tra giảm giá nhập khẩu
+keyword_short-004,keyword_short,False,substantive,True,điều chỉnh quy hoạch cảng cạn
+keyword_short-005,keyword_short,False,substantive,True,cấp lại chứng chỉ kinh doanh di vật
+keyword_short-006,keyword_short,False,substantive,True,Thu hồi giấy phép viễn thông
+keyword_short-007,keyword_short,False,substantive,True,trợ cấp tai nạn xung kích
+manual-000,manual_inscope,False,substantive,True,"Vợ chồng tôi mới sinh em bé, giờ phải đi làm giấy khai sinh ở đâu và mang theo gì?"
+manual-001,manual_inscope,False,substantive,True,"Tụi mình chuẩn bị cưới, muốn ra phường đăng ký kết hôn thì thủ tục thế nào?"
+manual-002,manual_inscope,False,substantive,True,"Tôi mới mua nhà và chuyển sang quận khác, làm sao để nhập hộ khẩu về chỗ ở mới?"
+manual-003,manual_inscope,False,substantive,True,"Giấy tạm trú của tôi sắp hết hạn, muốn gia hạn thêm thì làm thế nào?"
+manual-004,manual_inscope,False,substantive,True,"Tôi lỡ làm mất hộ chiếu, giờ phải đi trình báo ở đâu?"
+manual-005,manual_inscope,False,substantive,True,"Thẻ căn cước của tôi bị hỏng, muốn làm lại cái mới thì sao?"
+manual-006,manual_inscope,False,substantive,True,"Trước đây gia đình quên đăng ký khai tử cho ông, giờ muốn đăng ký lại có được không?"
+manual-007,manual_inscope,False,substantive,True,"Tôi muốn mở một quán cà phê nhỏ, cần đăng ký hộ kinh doanh như thế nào?"
+oos-000,out_of_scope,True,abstain,True,Thời tiết Hà Nội ngày mai thế nào?
+oos-001,out_of_scope,True,abstain,True,Cách nấu phở bò ngon tại nhà?
+oos-002,out_of_scope,True,abstain,True,Tỉ số trận đấu của đội tuyển Việt Nam tối qua là bao nhiêu?
+oos-003,out_of_scope,True,abstain,True,Giá Bitcoin hôm nay là bao nhiêu?
+oos-004,out_of_scope,True,abstain,True,Gợi ý cho tôi một bộ phim hay để xem cuối tuần.
+oos-005,out_of_scope,True,abstain,True,Dịch câu 'tôi yêu Việt Nam' sang tiếng Nhật giúp tôi.
+oos-006,out_of_scope,True,abstain,True,Công thức tính diện tích hình tròn là gì?
+oos-007,out_of_scope,True,abstain,True,Quán ăn ngon gần đây ở quận 1 là ở đâu?

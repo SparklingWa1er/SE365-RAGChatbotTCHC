@@ -1,0 +1,57 @@
+id,q_type,linh_vuc,faithfulness,n_claims,answer_relevance,noncommittal,context_precision,n_ctx,question
+factual_lookup-000,factual_lookup,"Mỹ thuật, nhiếp ảnh, triển lãm",1.0,2,0.9186583658843714,0,0.17857142857142858,28,Thời hạn cấp giấy phép triển lãm là bao lâu kể từ ngày nhận đủ hồ sơ hợp lệ?
+factual_lookup-001,factual_lookup,Hòa giải thương mại,1.0,14,0.8983975329936782,0,0.23076923076923078,13,Thủ tục thay đổi tên gọi của chi nhánh tổ chức hòa giải thương mại nước ngoài tại Việt Nam được thực hiện như thế nào?
+factual_lookup-002,factual_lookup,Kinh doanh bất động sản,1.0,2,0.86947323439008,0,0.3333333333333333,12,Thời hạn cấp lại chứng chỉ hành nghề môi giới bất động sản là bao lâu?
+factual_lookup-003,factual_lookup,Chính sách,1.0,8,0.853765426398224,0,0.17647058823529413,17,Trình tự thực hiện xét trợ cấp đối với người hoạt động kháng chiến bị nhiễm chất độc hóa học đang công tác trong Công an nhân dân như thế nào?
+factual_lookup-004,factual_lookup,"Lao động, tiền lương",1.0,1,0.8863527448975987,0,0.043478260869565216,23,Thời hạn Sở Nội vụ kiểm tra và trình Chủ tịch Ủy ban nhân dân cấp tỉnh thu hồi giấy phép là bao lâu?
+factual_lookup-005,factual_lookup,Sở hữu trí tuệ,1.0,1,0.8915175725990565,0,0.041666666666666664,24,Thời hạn thẩm định hình thức đơn đăng ký kiểu dáng công nghiệp là bao lâu?
+factual_lookup-006,factual_lookup,"Vật liệu nổ công nghiệp, tiền chất thuốc nổ",1.0,1,0.9328552442755408,0,0.19047619047619047,21,Thời hạn giải quyết hồ sơ cấp lại Giấy phép sử dụng vật liệu nổ công nghiệp là bao lâu?
+factual_lookup-007,factual_lookup,Chứng khoán,1.0,2,0.8503575018299383,0,0.14285714285714285,14,"Thời hạn cấp Giấy chứng nhận cung cấp dịch vụ bù trừ, thanh toán giao dịch chứng khoán phái sinh là bao lâu?"
+paraphrase-000,paraphrase,Hải quan,1.0,8,0.8427118178195041,0,0.18181818181818182,22,"Làm sao để đưa xe ô tô, xe máy đã nhập khẩu tạm thời ra khỏi Việt Nam?"
+paraphrase-001,paraphrase,Đường bộ,1.0,17,0.7446712032876986,0,0.375,32,Làm sao để được phép thiết kế và xây dựng nút giao thông nối với đường địa phương?
+paraphrase-002,paraphrase,Hoạt động khoa học và công nghệ,1.0,11,0.6986441231344775,0,0.32432432432432434,37,Làm sao để được hỗ trợ lãi suất khi vay tiền cho dự án khoa học và công nghệ?
+paraphrase-003,paraphrase,Quản lý xuất nhập cảnh,1.0,16,0.868335982932969,0,0.26666666666666666,30,Làm sao để gia hạn thời gian tạm trú cho người nước ngoài đã có giấy miễn thị thực?
+paraphrase-004,paraphrase,Chính sách BQP,0.8666666666666667,15,0.8422922811677233,0,0.21875,32,Làm sao để nhận trợ cấp một lần cho người từng tham gia kháng chiến chống Mỹ mà chưa được hưởng chế độ?
+paraphrase-005,paraphrase,Hải quan,0.7692307692307693,13,0.7002978061955653,0,0.1,20,Làm sao để gửi trả lại hàng hóa đã tạm nhập?
+paraphrase-006,paraphrase,Đường bộ,0.75,20,0.721791090796995,0,0.25,36,Làm sao để được phép thiết kế và xây dựng nút giao thông nối vào đường tỉnh hoặc đường đô thị do Sở Xây dựng quản lý?
+paraphrase-007,paraphrase,Chính sách BQP,0.7333333333333333,15,0.7965288304908068,0,0.75,8,Làm sao để xác nhận cho cán bộ quân đội đã nghỉ hưu bị bệnh nặng?
+scenario-000,scenario,"Hoạt động của các tổ chức hợp tác, nghiên cứu song phương",0.3,10,0.0,1,0.3870967741935484,31,"Tôi là đại diện của một tổ chức nghiên cứu nước ngoài và chúng tôi muốn mở một văn phòng đại diện tại Việt Nam, tôi cần làm gì để thực hiện điều này?"
+scenario-001,scenario,Tần số vô tuyến điện,1.0,10,0.7362886055050158,0,0.25,28,"Tôi là giám đốc một công ty truyền thông và chúng tôi đang có kế hoạch mở rộng dịch vụ phát thanh, truyền hình, vậy tôi cần làm gì để được phép sử dụng tần số và thiết bị vô tuyến điện cho các thiết bị này?"
+scenario-002,scenario,Hàng không,1.0,29,0.6448538562199141,0,0.25806451612903225,31,"Tôi là đại diện của một tổ chức nước ngoài muốn khai thác cơ sở cung cấp dịch vụ bảo đảm hoạt động bay tại Việt Nam, tôi cần phải làm gì để được cấp phép?"
+scenario-003,scenario,Thủy lợi,1.0,15,0.6433085772846142,0,0.19230769230769232,26,"Tôi đang có một dự án xây dựng gần khu vực công trình thủy lợi và cần xác định rõ ranh giới bảo vệ của công trình này, vậy tôi phải làm gì để được phê duyệt phương án và cắm mốc chỉ giới?"
+scenario-004,scenario,Đất đai,0.6666666666666666,21,0.749371691132696,0,0.125,24,"Tôi vừa mua một căn hộ trong một dự án bất động sản và muốn biết quy trình để đăng ký quyền sở hữu căn hộ này, tôi cần phải làm gì?"
+scenario-005,scenario,Hàng không,0.5,8,0.0,1,0.35,40,"Tôi là giám đốc một công ty hàng không và hiện tại chúng tôi đang có kế hoạch khai thác một sân bay mới, vậy tôi cần phải làm gì để được phép khai thác sân bay này?"
+scenario-006,scenario,Nông nghiệp,0.75,16,0.7599898653895663,0,0.36666666666666664,30,"Tôi là một nông dân đang muốn nâng cấp máy móc và thiết bị để cải thiện quy trình sản xuất và bảo quản sản phẩm nông nghiệp của mình, vậy tôi cần phải làm gì để nhận được sự hỗ trợ từ nhà nước?"
+scenario-007,scenario,An toàn thực phẩm,0.8333333333333334,12,0.7441303617061162,0,0.32142857142857145,28,"Tôi là giám đốc một công ty thực phẩm có vốn đầu tư nước ngoài, hiện tại giấy phép chỉ định cơ sở kiểm nghiệm thực phẩm của chúng tôi sắp hết hạn, tôi cần làm gì để gia hạn?"
+aspect_hoso-000,aspect_hoso,Quản lý xuất nhập cảnh,1.0,2,0.8253600693279243,0,0.05263157894736842,19,Thủ tục hủy tài khoản điện tử cần chuẩn bị những giấy tờ gì?
+aspect_hoso-001,aspect_hoso,"Quản lý nhà nước về hội, quỹ",1.0,7,0.8232946482159297,0,0.09375,32,"Thủ tục chia, tách; sáp nhập; hợp nhất hội cần những giấy tờ gì?"
+aspect_hoso-002,aspect_hoso,Nhà ở và công sở,1.0,4,0.9556809545955277,0,0.08,25,Thủ tục thuê nhà ở thương mại làm nhà ở công vụ cần những giấy tờ gì?
+aspect_hoso-003,aspect_hoso,Thuế,0.5833333333333334,12,0.8009937583008813,0,0.07142857142857142,14,Thủ tục khai thuế giá trị gia tăng đối với phương pháp khấu trừ thuế cần những giấy tờ gì?
+aspect_hoso-004,aspect_hoso,"Tín ngưỡng, tôn giáo",1.0,2,0.92692014252062,0,0.15384615384615385,13,Thủ tục đăng ký thay đổi người đại diện nhóm sinh hoạt tôn giáo tập trung của người nước ngoài cư trú hợp pháp tại Việt Nam cần những giấy tờ gì?
+aspect_hoso-005,aspect_hoso,Chính sách,0.5,14,0.7712300780304684,0,0.03225806451612903,31,Thành phần hồ sơ cần chuẩn bị cho thủ tục xét công nhận liệt sỹ gồm những giấy tờ gì?
+aspect_hoso-006,aspect_hoso,Di sản văn hóa,1.0,25,0.72320653815669,0,0.047619047619047616,21,"Thủ tục cấp giấy phép làm bản sao di vật, cổ vật cần những giấy tờ gì?"
+aspect_hoso-007,aspect_hoso,Hải quan,1.0,3,0.9450769301467759,0,0.058823529411764705,34,Thủ tục kiểm tra hóa đơn kiêm tờ khai hoàn thuế giá trị gia tăng và hàng hóa cần những giấy tờ gì?
+aspect_phi_dk-000,aspect_phi_dk,Quản lý xuất nhập cảnh,1.0,5,0.8703800186650296,0,0.13043478260869565,23,Điều kiện để đăng ký tài khoản điện tử trong lĩnh vực Quản lý xuất nhập cảnh là gì?
+aspect_phi_dk-001,aspect_phi_dk,Hàng không,1.0,1,0.9493807295703093,0,0.10526315789473684,19,"Lệ phí để cấp lại giấy phép, năng định nhân viên bảo đảm hoạt động bay là bao nhiêu?"
+aspect_phi_dk-002,aspect_phi_dk,"Quản lý vũ khí, vật liệu nổ, công cụ hỗ trợ và pháo",0.9285714285714286,14,0.7498616714915197,0,0.125,16,Điều kiện để được cấp Giấy phép trang bị vũ khí quân dụng là gì?
+aspect_phi_dk-003,aspect_phi_dk,Nuôi con nuôi,1.0,3,0.9543097573175268,0,0.03333333333333333,30,Lệ phí gia hạn giấy phép hoạt động của tổ chức con nuôi nước ngoài tại Việt Nam là bao nhiêu?
+aspect_phi_dk-004,aspect_phi_dk,"Kế toán, kiểm toán",1.0,1,0.9616647407613493,0,0.13333333333333333,15,Lệ phí để đăng ký cấp Giấy chứng nhận đủ điều kiện kinh doanh dịch vụ kế toán cho Chi nhánh doanh nghiệp kế toán nước ngoài tại Việt Nam là bao nhiêu?
+aspect_phi_dk-005,aspect_phi_dk,"Đo đạc, bản đồ và thông tin địa lý",1.0,5,0.8221621237202236,0,0.05,20,"Thủ tục cấp, bổ sung, gia hạn, cấp lại, cấp đổi giấy phép hoạt động đo đạc và bản đồ cấp Trung ương có lệ phí như thế nào?"
+aspect_phi_dk-006,aspect_phi_dk,Đấu giá tài sản,1.0,3,0.8887473150127474,0,0.25925925925925924,27,Điều kiện để thay đổi nội dung đăng ký hoạt động của chi nhánh doanh nghiệp đấu giá tài sản là gì?
+aspect_phi_dk-007,aspect_phi_dk,Bảo vệ dữ liệu cá nhân,1.0,2,0.900288971135867,0,0.09090909090909091,22,Điều kiện để được cấp lại Giấy chứng nhận đủ điều kiện kinh doanh dịch vụ xử lý dữ liệu cá nhân là gì?
+keyword_short-000,keyword_short,Quản lý nợ,1.0,7,0.5678016196115094,0,0.15151515151515152,33,chuyển nhượng dự án bảo lãnh
+keyword_short-001,keyword_short,"An toàn, vệ sinh lao động",0.8421052631578947,19,0.6441462522821817,0,0.7027027027027027,37,kiểm tra chất lượng hàng nhập khẩu
+keyword_short-002,keyword_short,"Khám bệnh, chữa bệnh",0.875,24,0.6599575197912574,0,0.5,14,thí điểm khám chữa bệnh từ xa
+keyword_short-003,keyword_short,Hải quan,1.0,11,0.6081994615561226,0,0.25,24,kiểm tra giảm giá nhập khẩu
+keyword_short-004,keyword_short,Hàng hải và đường thủy nội địa,1.0,13,0.525632625128967,0,0.29411764705882354,34,điều chỉnh quy hoạch cảng cạn
+keyword_short-005,keyword_short,Di sản văn hóa,1.0,7,0.7066831188863659,0,0.2222222222222222,27,cấp lại chứng chỉ kinh doanh di vật
+keyword_short-006,keyword_short,Viễn thông và Internet,1.0,13,0.670236762209719,0,0.21212121212121213,33,Thu hồi giấy phép viễn thông
+keyword_short-007,keyword_short,"Quản lý Đê điều và Phòng, chống thiên tai",1.0,6,0.5212145737819392,0,0.84,25,trợ cấp tai nạn xung kích
+manual-000,manual_inscope,Hộ tịch,0.9230769230769231,13,0.6874477617723609,0,0.14285714285714285,28,"Vợ chồng tôi mới sinh em bé, giờ phải đi làm giấy khai sinh ở đâu và mang theo gì?"
+manual-001,manual_inscope,Hộ tịch,0.4444444444444444,18,0.7538343922027729,0,0.125,16,"Tụi mình chuẩn bị cưới, muốn ra phường đăng ký kết hôn thì thủ tục thế nào?"
+manual-002,manual_inscope,"Đăng ký, quản lý cư trú",0.8333333333333334,6,0.6872277408753531,0,0.45454545454545453,22,"Tôi mới mua nhà và chuyển sang quận khác, làm sao để nhập hộ khẩu về chỗ ở mới?"
+manual-003,manual_inscope,"Đăng ký, quản lý cư trú",0.8461538461538461,13,0.7383549391984706,0,0.21052631578947367,38,"Giấy tạm trú của tôi sắp hết hạn, muốn gia hạn thêm thì làm thế nào?"
+manual-004,manual_inscope,Quản lý xuất nhập cảnh,1.0,3,0.7291787337555374,0,0.2916666666666667,24,"Tôi lỡ làm mất hộ chiếu, giờ phải đi trình báo ở đâu?"
+manual-005,manual_inscope,"Cấp, quản lý căn cước",0.75,12,0.7345919765462267,0,0.41935483870967744,31,"Thẻ căn cước của tôi bị hỏng, muốn làm lại cái mới thì sao?"
+manual-006,manual_inscope,Hộ tịch,0.5555555555555556,9,0.5993518085757045,0,0.16666666666666666,12,"Trước đây gia đình quên đăng ký khai tử cho ông, giờ muốn đăng ký lại có được không?"
+manual-007,manual_inscope,Thành lập và hoạt động doanh nghiệp (hộ kinh doanh),1.0,17,0.6830822408116758,0,0.16129032258064516,31,"Tôi muốn mở một quán cà phê nhỏ, cần đăng ký hộ kinh doanh như thế nào?"

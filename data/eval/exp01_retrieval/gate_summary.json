@@ -1,0 +1,7 @@
+{
+  "n_inscope": 20,
+  "n_out_of_scope": 10,
+  "gate_recall_inscope": 0.65,
+  "oos_rejection_rate": 1.0,
+  "avg_docs_passed_oos": 0.0
+}

@@ -1,0 +1,31 @@
+id,q_type,question,n_retrieved,n_passed_gate,gold_survives,correct
+manual-000,manual_inscope,"Vợ chồng tôi mới sinh em bé, giờ phải đi làm giấy khai sinh ở đâu và mang theo gì?",5,4,True,True
+manual-001,manual_inscope,"Tụi mình chuẩn bị cưới, muốn ra phường đăng ký kết hôn thì thủ tục thế nào?",5,3,True,True
+manual-002,manual_inscope,"Tôi mới mua nhà và chuyển sang quận khác, làm sao để nhập hộ khẩu về chỗ ở mới?",5,3,True,True
+manual-003,manual_inscope,"Giấy tạm trú của tôi sắp hết hạn, muốn gia hạn thêm thì làm thế nào?",0,0,False,False
+manual-004,manual_inscope,"Tôi lỡ làm mất hộ chiếu, giờ phải đi trình báo ở đâu?",5,5,True,True
+manual-005,manual_inscope,"Thẻ căn cước của tôi bị hỏng, muốn làm lại cái mới thì sao?",5,5,True,True
+manual-006,manual_inscope,"Trước đây gia đình quên đăng ký khai tử cho ông, giờ muốn đăng ký lại có được không?",5,5,True,True
+manual-007,manual_inscope,"Tôi muốn mở một quán cà phê nhỏ, cần đăng ký hộ kinh doanh như thế nào?",5,4,True,True
+manual-008,manual_inscope,"Cháu tôi mồ côi cha mẹ, tôi muốn làm người giám hộ hợp pháp thì thủ tục ra sao?",5,2,False,False
+manual-009,manual_inscope,"Tòa đã xử cho tôi ly hôn xong, giờ cần ghi vào sổ hộ tịch thì làm gì?",0,0,False,False
+manual-010,manual_inscope,"Hai vợ chồng tôi muốn nhận một bé trong nước làm con nuôi, thủ tục thế nào?",0,0,False,False
+manual-011,manual_inscope,"Bằng lái xe của tôi sắp hết hạn, muốn đổi bằng mới thì làm ở đâu?",5,5,True,True
+manual-012,manual_inscope,Tôi muốn đăng ký xe tạm thời online trên cổng dịch vụ công thì làm thế nào?,5,5,True,True
+manual-013,manual_inscope,"Tôi sắp đi làm xa nhà mấy tháng, có cần khai báo tạm vắng không và làm sao?",5,5,True,True
+manual-014,manual_inscope,Đăng ký khai sinh cho con có mất lệ phí không?,5,4,False,False
+manual-015,manual_inscope,Đăng ký kết hôn cần mang theo những giấy tờ gì?,0,0,False,False
+manual-016,manual_inscope,đăng ký hộ kinh doanh cá thể,0,0,False,False
+manual-017,manual_inscope,làm lại thẻ căn cước bị mất,5,5,True,True
+manual-018,manual_inscope,Muốn đăng ký thường trú vào nhà đang thuê thì cần điều kiện gì?,5,5,True,True
+manual-019,manual_inscope,đổi giấy phép lái xe quá hạn,5,5,True,True
+oos-000,out_of_scope,Thời tiết Hà Nội ngày mai thế nào?,5,0,,True
+oos-001,out_of_scope,Cách nấu phở bò ngon tại nhà?,0,0,,True
+oos-002,out_of_scope,Tỉ số trận đấu của đội tuyển Việt Nam tối qua là bao nhiêu?,0,0,,True
+oos-003,out_of_scope,Giá Bitcoin hôm nay là bao nhiêu?,5,0,,True
+oos-004,out_of_scope,Gợi ý cho tôi một bộ phim hay để xem cuối tuần.,5,0,,True
+oos-005,out_of_scope,Dịch câu 'tôi yêu Việt Nam' sang tiếng Nhật giúp tôi.,5,0,,True
+oos-006,out_of_scope,Công thức tính diện tích hình tròn là gì?,5,0,,True
+oos-007,out_of_scope,Quán ăn ngon gần đây ở quận 1 là ở đâu?,0,0,,True
+oos-008,out_of_scope,Ai là người giàu nhất thế giới hiện nay?,0,0,,True
+oos-009,out_of_scope,Làm sao để giảm cân nhanh trong một tuần?,0,0,,True
