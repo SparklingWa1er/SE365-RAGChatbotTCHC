@@ -1,0 +1,123 @@
+\documentclass[11pt]{article}
+\usepackage{weekly}
+\begin{document}
+\weekheader{4}{23/06 \textendash{} 30/06/2026}{Tổng quát hoá đa LLM và Hoàn thiện báo cáo}{w4col}{Đang triển khai}
+
+\section{Mục tiêu tuần}
+Tuần cuối hướng tới việc tách hệ thống khỏi sự phụ thuộc vào một nhà cung cấp mô hình duy
+nhất: trừu tượng hoá tầng LLM và embedding để chạy được trên Azure OpenAI, OpenAI và các mô
+hình mã nguồn mở phục vụ qua vLLM. Song song đó, nhóm hoàn thiện bộ tài liệu vận hành và báo
+cáo (báo cáo chính cùng bốn báo cáo tuần).
+
+\section{Công việc đã thực hiện}
+
+\paragraph{Trừu tượng hoá tầng mô hình (Model Gateway): }
+Nhóm định nghĩa một cổng mô hình (model gateway) độc lập nhà cung cấp (provider-agnostic):
+phần lõi RAG chỉ gọi tới mô hình thông qua một interface chung cho hai tác vụ là sinh văn bản
+dạng chat và nhúng vector, không phụ thuộc vào SDK cụ thể của bất kỳ nhà cung cấp nào. Thông
+tin nhà cung cấp, tên mô hình và khoá xác thực được khai báo hoàn toàn qua tệp \texttt{.env}
+và trang Settings, cho phép đổi mô hình mà không phải sửa mã nguồn.
+
+\paragraph{Các bộ tương hợp (Adapters): }
+Trên nền interface chung, nhóm bổ sung các bộ tương hợp cho từng nhà cung cấp, tóm tắt ở
+Bảng~\ref{tab:w4-adapter}. Đáng chú ý, các mô hình mã nguồn mở tự host (Llama, Qwen) được phục
+vụ qua vLLM với một endpoint tương thích OpenAI, nên chỉ cần trỏ tham số \texttt{base\_url} về
+máy chủ vLLM là tái dùng được cùng một bộ tương hợp với OpenAI.
+
+\begin{table}[H]
+\centering\small
+\renewcommand{\arraystretch}{1.25}
+\begin{tabular}{@{}lp{4.2cm}p{5.2cm}@{}}
+\toprule
+Nhà cung cấp & Giao tiếp & Ghi chú \\
+\midrule
+Azure OpenAI & SDK Azure (hiện có) & \texttt{gpt-4o} và \texttt{text-embedding-3-large} (đang dùng). \\
+OpenAI & API OpenAI chuẩn & Đổi khoá và endpoint, tái dùng cùng interface chat/embedding. \\
+Mã nguồn mở qua vLLM & Endpoint tương thích OpenAI & Tự host (Llama, Qwen); chỉ trỏ \texttt{base\_url} về máy chủ vLLM. \\
+\bottomrule
+\end{tabular}
+\caption{Các bộ tương hợp nhà cung cấp mô hình.}
+\label{tab:w4-adapter}
+\end{table}
+
+\begin{figure}[H]
+\centering
+\resizebox{0.92\textwidth}{!}{%
+\begin{tikzpicture}[node distance=0.7cm and 1.1cm]
+  \node[gbox, text width=3.0cm] (core) {Lõi RAG\\(reasoning + truy hồi)};
+  \node[abox, right=of core, text width=3.0cm] (gw) {Model Gateway\\(interface chung)};
+  \node[fbox, right=2.4cm of gw, yshift=1.55cm] (az) {Azure OpenAI\\gpt-4o, emb-3-large};
+  \node[dbox, right=2.4cm of gw] (oai) {OpenAI\\(API chuẩn)};
+  \node[fbox, right=2.4cm of gw, yshift=-1.55cm] (vllm) {vLLM\\(mã nguồn mở, tự host)};
+  \draw[farr] (core)--(gw);
+  \draw[farr] (gw)--(az); \draw[farr] (gw)--(oai); \draw[farr] (gw)--(vllm);
+  \node[flab] at ($(gw)!0.5!(oai)+(0,0.95)$) {Chọn qua cấu hình};
+\end{tikzpicture}}
+\caption{Model Gateway độc lập nhà cung cấp: lõi RAG không đổi, chỉ chọn nhà cung cấp qua cấu hình.}
+\label{fig:w4-gateway}
+\end{figure}
+
+\screenshotfig{img/week4-settings.png}{Trang Settings: chọn nhà cung cấp và mô hình LLM (Azure,
+OpenAI, vLLM) qua cấu hình, không phải sửa mã.}{Chọn mô hình theo nhà cung cấp trong trang cấu
+hình.}{fig:w4-settings}
+
+\paragraph{Kiểm thử và lưu ý kỹ thuật: }
+Nhóm kiểm thử đầu cuối cho từng nhà cung cấp, bao gồm sinh chat kèm streaming và gọi công cụ
+của agent, cũng như tác vụ nhúng và toàn luồng RAG. Một lưu ý quan trọng là khi đổi mô hình
+nhúng, số chiều vector sẽ thay đổi và bắt buộc phải nhúng lại (reindex) toàn bộ corpus; do đó
+nhóm tách riêng cấu hình nhúng khỏi cấu hình sinh và cảnh báo rõ khi số chiều thay đổi. Với
+vLLM, máy chủ cần có GPU, và nhóm chuẩn hoá các khác biệt nhỏ giữa các endpoint tương thích
+OpenAI như định dạng gọi công cụ hay tham số dừng.
+
+\screenshotfig{img/week4-multimodel.png}{Cùng một câu hỏi chạy trên hai nhà cung cấp khác nhau
+(ví dụ Azure và mô hình mã nguồn mở qua vLLM) cho kết quả tương đương.}{Kiểm thử cùng câu hỏi
+trên nhiều nhà cung cấp LLM.}{fig:w4-multimodel}
+
+\paragraph{Hoàn thiện hệ thống vận hành và báo cáo: }
+Nhóm chuẩn bị các kịch bản khởi chạy (run-backend, run-frontend) có bật sẵn chế độ UTF-8 để
+tránh lỗi mã hoá tiếng Việt trên console Windows, cùng cơ chế chia sẻ index dựng sẵn qua
+HuggingFace để tái lập nhanh trên máy mới. Về tài liệu, nhóm biên soạn báo cáo chính (gồm các
+phần Giới thiệu, Công trình liên quan, Phương pháp và Kế hoạch) cùng bốn báo cáo tuần chi tiết,
+thống nhất sơ đồ luồng và bảng số liệu giữa các tài liệu.
+
+\section{Sản phẩm bàn giao (dự kiến)}
+\begin{table}[H]
+\centering\small
+\begin{tabular}{@{}lp{8.7cm}@{}}
+\toprule
+Thành phần & Mô tả \\
+\midrule
+Model Gateway & Interface chung cho LLM và embedding, độc lập nhà cung cấp. \\
+Adapters & Azure OpenAI, OpenAI, vLLM (endpoint tương thích OpenAI). \\
+Cấu hình & Chọn nhà cung cấp và mô hình qua \texttt{.env} và Settings, không sửa mã. \\
+Tài liệu vận hành & Hướng dẫn cấu hình và lưu ý reindex khi đổi mô hình nhúng. \\
+Bộ báo cáo PDF & Báo cáo chính và bốn báo cáo tuần. \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\section{Rủi ro và cách kiểm soát}
+\begin{itemize}
+  \item Đổi mô hình nhúng kéo theo phải nhúng lại toàn bộ corpus: tách cấu hình nhúng khỏi
+        cấu hình sinh và cảnh báo rõ khi số chiều thay đổi.
+  \item Khác biệt giữa các endpoint của các nhà cung cấp: lớp tương hợp che giấu khác biệt và
+        nhóm kiểm thử hồi quy cho từng nhà cung cấp.
+  \item Chi phí và hạ tầng: mô hình mã nguồn mở giảm phụ thuộc dịch vụ trả phí nhưng cần GPU,
+        nhóm nêu khuyến nghị triển khai theo nhu cầu thực tế.
+\end{itemize}
+
+\section{Checklist tuần 4}
+\begin{itemize}[label={}]
+  \cbWip Trừu tượng hoá tầng LLM và embedding (Model Gateway độc lập nhà cung cấp).
+  \cbTodo Adapter Azure (có sẵn), OpenAI và vLLM; chọn mô hình qua cấu hình.
+  \cbTodo Kiểm thử đầu cuối từng nhà cung cấp (chat, streaming, embedding).
+  \cbWip Hoàn thiện báo cáo chính và bốn báo cáo tuần.
+\end{itemize}
+
+\section{Kết luận dự án}
+Sau bốn tuần, đồ án đi trọn một vòng từ khâu dữ liệu (5.208 thủ tục, kho truy hồi ba lớp), qua
+đường cơ sở một lượt có trích dẫn, tới kiến trúc Agentic RAG (tác tử ReAct hai giai đoạn có
+minh bạch hoá suy luận và trích dẫn kèm tô sáng), và cuối cùng là tổng quát hoá đa nhà cung cấp
+LLM. Kết quả là một trợ lý hỏi đáp thủ tục hành chính công có căn cứ, minh bạch và dễ triển khai.
+
+\end{document}

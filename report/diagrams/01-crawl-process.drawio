@@ -1,0 +1,168 @@
+<mxfile host="app.diagrams.net" agent="claude-code" version="24.0.0">
+  <diagram id="crawl-process" name="Crawl - Thu thap TTHC">
+    <mxGraphModel dx="1200" dy="900" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1150" pageHeight="1650" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+
+        <!-- Title -->
+        <mxCell id="title" value="QUÁ TRÌNH CRAWL DỮ LIỆU THỦ TỤC HÀNH CHÍNH CÔNG&#10;(pipeline/crawler/crawl.py — Cổng Dịch vụ công Quốc gia)" style="text;html=1;align=center;verticalAlign=middle;fontSize=16;fontStyle=1;fillColor=none;" vertex="1" parent="1">
+          <mxGeometry x="120" y="20" width="820" height="50" as="geometry" />
+        </mxCell>
+
+        <!-- Phase containers (drawn first = behind) -->
+        <mxCell id="c1" value="PHA 1 — LIST · Duyệt danh sách bằng phân trang con trỏ (lastId)" style="rounded=0;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#9673A6;dashed=1;verticalAlign=top;fontStyle=1;fontColor=#9673A6;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="60" y="350" width="720" height="430" as="geometry" />
+        </mxCell>
+        <mxCell id="c2" value="PHA 2 — DETAIL · Tải chi tiết từng thủ tục theo id (resume + retry)" style="rounded=0;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#9673A6;dashed=1;verticalAlign=top;fontStyle=1;fontColor=#9673A6;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="60" y="810" width="720" height="730" as="geometry" />
+        </mxCell>
+
+        <!-- External API source -->
+        <mxCell id="ext" value="Cổng Dịch vụ công Quốc gia&#10;https://dichvucong.gov.vn/api/v1&#10;(API by-citizen — không cần token)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F8CECC;strokeColor=#B85450;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="360" y="80" width="280" height="56" as="geometry" />
+        </mxCell>
+
+        <!-- Start -->
+        <mxCell id="start" value="Bắt đầu: chạy crawl.py" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#D5E8D4;strokeColor=#82B366;fontSize=12;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="380" y="172" width="240" height="44" as="geometry" />
+        </mxCell>
+
+        <!-- Init -->
+        <mxCell id="init" value="Khởi tạo DvcClient (requests.Session + HEADERS)&#10;ensure_dirs() → tạo data/raw&#10;load_state() ← crawl_state.json" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#DAE8FC;strokeColor=#6C8EBF;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="360" y="252" width="280" height="64" as="geometry" />
+        </mxCell>
+
+        <!-- PHASE 1 nodes -->
+        <mxCell id="p1_post" value="POST /submitting/formality/&#10;list-all-formality-by-citizen&#10;body {limit:50, lastId, q, categoryId, departmentCode}" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#DAE8FC;strokeColor=#6C8EBF;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="360" y="386" width="280" height="66" as="geometry" />
+        </mxCell>
+        <mxCell id="p1_recv" value="Nhận data {items, lastId, total}&#10;Ghi nối từng item → index.jsonl" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#DAE8FC;strokeColor=#6C8EBF;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="360" y="478" width="280" height="56" as="geometry" />
+        </mxCell>
+        <mxCell id="p1_state" value="Cập nhật state {lastId, list_count}&#10;Lưu crawl_state.json (để resume)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#DAE8FC;strokeColor=#6C8EBF;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="360" y="560" width="280" height="54" as="geometry" />
+        </mxCell>
+        <mxCell id="p1_dec" value="Còn trang?&#10;lastId đổi &amp; items = 50" style="rhombus;whiteSpace=wrap;html=1;fillColor=#FFE6CC;strokeColor=#D79B00;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="420" y="644" width="160" height="86" as="geometry" />
+        </mxCell>
+
+        <!-- datastores phase 1 -->
+        <mxCell id="ds_index" value="index.jsonl&#10;(1 dòng = 1 thủ tục)" style="shape=cylinder3;whiteSpace=wrap;html=1;fillColor=#F5F5F5;strokeColor=#666666;fontSize=10;boundedLbl=1;backgroundOutline=1;size=12;" vertex="1" parent="1">
+          <mxGeometry x="120" y="476" width="140" height="64" as="geometry" />
+        </mxCell>
+        <mxCell id="ds_state" value="crawl_state.json" style="shape=cylinder3;whiteSpace=wrap;html=1;fillColor=#F5F5F5;strokeColor=#666666;fontSize=10;boundedLbl=1;backgroundOutline=1;size=12;" vertex="1" parent="1">
+          <mxGeometry x="120" y="560" width="140" height="54" as="geometry" />
+        </mxCell>
+
+        <!-- PHASE 2 nodes -->
+        <mxCell id="p2_iter" value="iter_index(): đọc index.jsonl&#10;khử trùng lặp theo id" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#DAE8FC;strokeColor=#6C8EBF;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="360" y="846" width="280" height="54" as="geometry" />
+        </mxCell>
+        <mxCell id="p2_loop" value="Còn id&#10;chưa xử lý?" style="rhombus;whiteSpace=wrap;html=1;fillColor=#FFE6CC;strokeColor=#D79B00;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="424" y="928" width="152" height="72" as="geometry" />
+        </mxCell>
+        <mxCell id="p2_exist" value="Đã có data/raw/&lt;id&gt;.json&#10;&amp; không --force?" style="rhombus;whiteSpace=wrap;html=1;fillColor=#FFE6CC;strokeColor=#D79B00;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="400" y="1028" width="200" height="84" as="geometry" />
+        </mxCell>
+        <mxCell id="p2_skip" value="Bỏ qua&#10;(skip++)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#E1D5E7;strokeColor=#9673A6;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="640" y="1044" width="120" height="52" as="geometry" />
+        </mxCell>
+        <mxCell id="p2_fetch" value="POST /configuring/formality/&#10;get-formality-by-citizen {id}" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#DAE8FC;strokeColor=#6C8EBF;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="360" y="1150" width="280" height="56" as="geometry" />
+        </mxCell>
+        <mxCell id="p2_write" value="write_json atomic (.tmp → replace)&#10;→ data/raw/&lt;uuid&gt;.json" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#DAE8FC;strokeColor=#6C8EBF;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="360" y="1236" width="280" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="p2_err" value="Lỗi&#10;request?" style="rhombus;whiteSpace=wrap;html=1;fillColor=#FFE6CC;strokeColor=#D79B00;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="424" y="1328" width="152" height="72" as="geometry" />
+        </mxCell>
+        <mxCell id="p2_fail" value="Ghi failures.jsonl&#10;{id, code, error}" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F8CECC;strokeColor=#B85450;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="110" y="1330" width="150" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="p2_ok" value="ok++   ·   polite_sleep()" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#DAE8FC;strokeColor=#6C8EBF;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="360" y="1430" width="280" height="44" as="geometry" />
+        </mxCell>
+        <mxCell id="ds_raw" value="data/raw/&#10;&lt;uuid&gt;.json" style="shape=cylinder3;whiteSpace=wrap;html=1;fillColor=#F5F5F5;strokeColor=#666666;fontSize=10;boundedLbl=1;backgroundOutline=1;size=12;" vertex="1" parent="1">
+          <mxGeometry x="650" y="1234" width="120" height="66" as="geometry" />
+        </mxCell>
+
+        <!-- End -->
+        <mxCell id="end" value="Hoàn tất crawl → đầu vào cho parser" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#D5E8D4;strokeColor=#82B366;fontSize=12;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="360" y="1570" width="280" height="46" as="geometry" />
+        </mxCell>
+
+        <!-- NOTES -->
+        <mxCell id="n_modes" value="Tham số CLI (argparse):&#10;--list-only · --detail-only&#10;--force · --limit N&#10;--retry-failed · --refresh-list" style="shape=note;whiteSpace=wrap;html=1;fillColor=#FFF2CC;strokeColor=#D6B656;fontSize=10;align=left;verticalAlign=top;size=14;" vertex="1" parent="1">
+          <mxGeometry x="820" y="170" width="250" height="100" as="geometry" />
+        </mxCell>
+        <mxCell id="n_retry" value="DvcClient._post — chống lỗi mạng:&#10;• retry tối đa MAX_RETRIES = 4&#10;• backoff lũy thừa 2^(n-1) giây&#10;• coi HTTP 5xx là lỗi để thử lại&#10;• timeout 40s mỗi request" style="shape=note;whiteSpace=wrap;html=1;fillColor=#FFF2CC;strokeColor=#D6B656;fontSize=10;align=left;verticalAlign=top;size=14;" vertex="1" parent="1">
+          <mxGeometry x="820" y="386" width="250" height="110" as="geometry" />
+        </mxCell>
+        <mxCell id="n_polite" value="polite_sleep() — lịch sự với server:&#10;REQUEST_DELAY 0.4s + jitter 0–0.3s&#10;ngẫu nhiên giữa mỗi request." style="shape=note;whiteSpace=wrap;html=1;fillColor=#FFF2CC;strokeColor=#D6B656;fontSize=10;align=left;verticalAlign=top;size=14;" vertex="1" parent="1">
+          <mxGeometry x="820" y="560" width="250" height="86" as="geometry" />
+        </mxCell>
+        <mxCell id="n_resume" value="RESUME: nhờ index.jsonl + crawl_state.json + bỏ qua file đã tồn tại,&#10;ngắt giữa chừng → chạy lại không tải lại từ đầu, không mất dữ liệu." style="shape=note;whiteSpace=wrap;html=1;fillColor=#FFF2CC;strokeColor=#D6B656;fontSize=10;align=left;verticalAlign=top;size=14;" vertex="1" parent="1">
+          <mxGeometry x="820" y="1028" width="250" height="100" as="geometry" />
+        </mxCell>
+        <mxCell id="n_atomic" value="GHI NGUYÊN TỬ: ghi ra .tmp rồi&#10;replace → file JSON không bao giờ&#10;hỏng dở khi bị gián đoạn." style="shape=note;whiteSpace=wrap;html=1;fillColor=#FFF2CC;strokeColor=#D6B656;fontSize=10;align=left;verticalAlign=top;size=14;" vertex="1" parent="1">
+          <mxGeometry x="820" y="1234" width="250" height="86" as="geometry" />
+        </mxCell>
+        <mxCell id="n_fail" value="failures.jsonl gom các id lỗi.&#10;Chạy lại bằng --retry-failed:&#10;đọc lại, xóa log cũ, tải lại;&#10;id nào vẫn lỗi sẽ ghi lại." style="shape=note;whiteSpace=wrap;html=1;fillColor=#FFF2CC;strokeColor=#D6B656;fontSize=10;align=left;verticalAlign=top;size=14;" vertex="1" parent="1">
+          <mxGeometry x="820" y="1340" width="250" height="100" as="geometry" />
+        </mxCell>
+
+        <!-- EDGES main flow -->
+        <mxCell id="e_start_init" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;" edge="1" parent="1" source="start" target="init"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="e_init_post" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;" edge="1" parent="1" source="init" target="p1_post"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="e_post_recv" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;" edge="1" parent="1" source="p1_post" target="p1_recv"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="e_recv_state" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;" edge="1" parent="1" source="p1_recv" target="p1_state"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="e_state_dec" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;" edge="1" parent="1" source="p1_state" target="p1_dec"><mxGeometry relative="1" as="geometry" /></mxCell>
+
+        <!-- loop back phase1 -->
+        <mxCell id="e_dec_loop" value="Có: polite_sleep + lastId mới" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;exitX=0;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;fontSize=10;" edge="1" parent="1" source="p1_dec" target="p1_post">
+          <mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="320" y="687" /><mxPoint x="320" y="419" /></Array></mxGeometry>
+        </mxCell>
+        <mxCell id="e_dec_iter" value="Hết danh sách (list_done = true)" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;fontSize=10;" edge="1" parent="1" source="p1_dec" target="p2_iter"><mxGeometry relative="1" as="geometry" /></mxCell>
+
+        <!-- ext -> post -->
+        <mxCell id="e_ext_post" value="HTTPS POST" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=open;dashed=1;strokeColor=#B85450;fontSize=10;exitX=0;exitY=0.5;exitDx=0;exitDy=0;" edge="1" parent="1" source="ext" target="p1_post">
+          <mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="300" y="108" /><mxPoint x="300" y="419" /></Array></mxGeometry>
+        </mxCell>
+        <mxCell id="e_ext_fetch" value="HTTPS POST" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=open;dashed=1;strokeColor=#B85450;fontSize=10;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="ext" target="p2_fetch">
+          <mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="300" y="108" /><mxPoint x="300" y="1178" /></Array></mxGeometry>
+        </mxCell>
+
+        <!-- data store writes phase1 -->
+        <mxCell id="e_recv_dsindex" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=open;dashed=1;strokeColor=#666666;" edge="1" parent="1" source="p1_recv" target="ds_index"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="e_state_dsstate" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=open;dashed=1;strokeColor=#666666;" edge="1" parent="1" source="p1_state" target="ds_state"><mxGeometry relative="1" as="geometry" /></mxCell>
+
+        <!-- PHASE 2 edges -->
+        <mxCell id="e_iter_loop" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;" edge="1" parent="1" source="p2_iter" target="p2_loop"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="e_loop_exist" value="Có" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;fontSize=10;" edge="1" parent="1" source="p2_loop" target="p2_exist"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="e_loop_end" value="Không còn → kết thúc" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;fontSize=10;exitX=1;exitY=0.5;exitDx=0;exitDy=0;" edge="1" parent="1" source="p2_loop" target="end">
+          <mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="710" y="964" /><mxPoint x="710" y="1593" /></Array></mxGeometry>
+        </mxCell>
+        <mxCell id="e_exist_skip" value="Có (skip)" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;fontSize=10;" edge="1" parent="1" source="p2_exist" target="p2_skip"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="e_exist_fetch" value="Không → tải" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;fontSize=10;" edge="1" parent="1" source="p2_exist" target="p2_fetch"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="e_fetch_write" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;" edge="1" parent="1" source="p2_fetch" target="p2_write"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="e_write_err" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;" edge="1" parent="1" source="p2_write" target="p2_err"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="e_write_dsraw" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=open;dashed=1;strokeColor=#666666;" edge="1" parent="1" source="p2_write" target="ds_raw"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="e_err_fail" value="Có" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;fontSize=10;" edge="1" parent="1" source="p2_err" target="p2_fail"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="e_err_ok" value="Không" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;fontSize=10;" edge="1" parent="1" source="p2_err" target="p2_ok"><mxGeometry relative="1" as="geometry" /></mxCell>
+
+        <!-- loops back to p2_loop -->
+        <mxCell id="e_ok_loop" value="item kế tiếp" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;fontSize=10;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=1;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="p2_ok" target="p2_loop">
+          <mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="745" y="1452" /><mxPoint x="745" y="964" /></Array></mxGeometry>
+        </mxCell>
+        <mxCell id="e_skip_loop" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=1;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="p2_skip" target="p2_loop">
+          <mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="785" y="1070" /><mxPoint x="785" y="964" /></Array></mxGeometry>
+        </mxCell>
+        <mxCell id="e_fail_loop" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;exitX=0.5;exitY=0;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="p2_fail" target="p2_loop">
+          <mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="185" y="964" /></Array></mxGeometry>
+        </mxCell>
+
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

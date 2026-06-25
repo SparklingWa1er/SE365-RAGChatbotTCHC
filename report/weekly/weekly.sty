@@ -1,0 +1,100 @@
+% =====================================================================
+% weekly.sty — style chung cho 4 báo cáo tuần (mini-report).
+% Dùng: \documentclass[11pt]{article} \usepackage{weekly}
+% =====================================================================
+\NeedsTeXFormat{LaTeX2e}
+\ProvidesPackage{weekly}[2026/06/12 Weekly mini-report style]
+
+\usepackage[T5]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage[vietnamese,english]{babel}
+\usepackage[a4paper,top=1.9cm,bottom=1.9cm,left=2.3cm,right=2.3cm]{geometry}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{booktabs}
+\usepackage{array}
+\newcolumntype{P}[1]{>{\centering\arraybackslash}p{#1}}
+\usepackage[table]{xcolor}
+\usepackage{float}
+\usepackage{enumitem}
+\usepackage{listings}
+\usepackage{graphicx}
+\usepackage{tikz}
+\usetikzlibrary{arrows.meta, positioning, calc, fit, backgrounds}
+\usepackage{hyperref}
+\hypersetup{colorlinks=true, linkcolor=blue, urlcolor=cyan, citecolor=blue}
+
+% Ký tự Unicode đặc biệt -> dạng pdflatex biên dịch được.
+\DeclareUnicodeCharacter{3010}{[}
+\DeclareUnicodeCharacter{3011}{]}
+\DeclareUnicodeCharacter{1F310}{(web)}
+
+% Tickbox trạng thái: xong / đang làm / chưa làm.
+\newcommand{\cbDone}{\item[$\boxtimes$]}
+\newcommand{\cbWip}{\item[$\boxminus$]}
+\newcommand{\cbTodo}{\item[$\square$]}
+
+% Bảng màu.
+\definecolor{boxblue}{RGB}{225,238,252}
+\definecolor{boxgreen}{RGB}{223,244,228}
+\definecolor{boxamber}{RGB}{253,243,222}
+\definecolor{boxgray}{RGB}{238,238,242}
+\definecolor{w1col}{RGB}{33,94,160}   % xanh dương — tuần 1
+\definecolor{w2col}{RGB}{18,135,125}  % teal — tuần 2
+\definecolor{w3col}{RGB}{200,105,28}  % cam — tuần 3
+\definecolor{w4col}{RGB}{161,114,16}  % vàng đồng — tuần 4
+
+% Style sơ đồ.
+\tikzset{
+  fbox/.style={rectangle, rounded corners=2pt, draw=black!55, fill=boxblue,
+               align=center, font=\footnotesize, minimum height=0.9cm,
+               inner sep=4pt, text width=2.5cm},
+  dbox/.style={fbox, fill=boxgreen},
+  abox/.style={fbox, fill=boxamber},
+  gbox/.style={fbox, fill=boxgray},
+  farr/.style={-{Stealth[length=2.2mm]}, semithick, draw=black!65},
+  flab/.style={font=\scriptsize\itshape, fill=white, inner sep=1pt},
+}
+
+% Danh sách gọn.
+\setlist[itemize]{leftmargin=1.5em, itemsep=1.5pt, topsep=2pt, parsep=0pt}
+
+% Cho phép TeX co giãn dòng khi gặp token dài (đường dẫn, tên hàm) -> hết tràn lề.
+\setlength{\emergencystretch}{3em}
+
+% Placeholder ẢNH CHỤP MÀN HÌNH (tự thay thế).
+%   \screenshotfig{đường-dẫn-ảnh}{mô tả cần chụp gì}{caption}{label}
+% - Nếu file ảnh ĐÃ tồn tại  -> tự chèn ảnh (width 86%).
+% - Nếu CHƯA có             -> hiện khung gạch nét đứt mô tả nội dung cần chụp.
+% Cách dùng: chụp màn hình, lưu vào thư mục img/ ĐÚNG tên gợi ý -> biên dịch lại là ảnh hiện ra.
+\newcommand{\screenshotfig}[4]{%
+  \begin{figure}[H]\centering
+  \IfFileExists{#1}{%
+    \includegraphics[width=0.86\textwidth]{#1}%
+  }{%
+    \begin{tikzpicture}
+      \node[draw=black!40, dashed, line width=0.9pt, rounded corners,
+            fill=black!4, align=center, inner sep=14pt,
+            text width=0.80\textwidth, minimum height=4.3cm] {%
+        {\large\bfseries\color{black!55}[\,\ ẢNH CHỤP MÀN HÌNH\ \,]}\\[8pt]
+        {\normalsize\color{black!75}#2}\\[12pt]
+        {\footnotesize\color{black!45}Lưu ảnh vào: \texttt{\detokenize{#1}}}};
+    \end{tikzpicture}%
+  }%
+  \caption{#3}\label{#4}%
+  \end{figure}%
+}
+
+% Banner đầu báo cáo: {số tuần}{khoảng ngày}{chủ đề}{màu}{trạng thái}
+\newcommand{\weekheader}[5]{%
+  \thispagestyle{plain}%
+  \noindent\begin{tikzpicture}
+    \node[anchor=south west, fill=#4, text=white, rounded corners=3pt, inner sep=9pt,
+          text width=\dimexpr\textwidth-18pt\relax] at (0,0) {%
+      {\large\textbf{BÁO CÁO TUẦN #1 \textemdash{} #3}}\\[3pt]
+      {\small Thời gian: #2 \quad\textbullet\quad Trạng thái: #5}};
+  \end{tikzpicture}\par\vspace{5pt}%
+  {\small\textit{Trợ lý hỏi đáp thủ tục hành chính công Việt Nam ứng dụng Agentic RAG}}\par
+  {\small Nhóm: Nguyễn Xuân Phúc, Nguyễn Minh Triết \hfill GVHD: Đỗ Trọng Hợp, Nguyễn Ngọc Quí}\par
+  \vspace{3pt}\hrule\vspace{9pt}%
+}

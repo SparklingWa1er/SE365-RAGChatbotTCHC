@@ -78,3 +78,7 @@ sidebar-new.png
 #slide
 slide_references/
 present_content/
+
+# --- File báo cáo Word (không đẩy lên repo) ---
+*.docx
+~$*.docx

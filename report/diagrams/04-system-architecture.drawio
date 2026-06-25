@@ -1,0 +1,142 @@
+<mxfile host="app.diagrams.net" agent="claude-code" version="24.0.0">
+  <diagram id="system-architecture" name="Kien truc he thong">
+    <mxGraphModel dx="1200" dy="900" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1420" pageHeight="1000" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+
+        <mxCell id="title" value="KIẾN TRÚC &amp; HOẠT ĐỘNG TOÀN HỆ THỐNG — Chatbot RAG Thủ tục hành chính công&#10;Pipeline dữ liệu (offline) ·  Kho lưu trữ (chia sẻ)  ·  Ứng dụng trực tuyến (online)" style="text;html=1;align=center;verticalAlign=middle;fontSize=16;fontStyle=1;fillColor=none;" vertex="1" parent="1">
+          <mxGeometry x="260" y="14" width="900" height="46" as="geometry" />
+        </mxCell>
+
+        <!-- containers -->
+        <mxCell id="cOff" value="PIPELINE DỮ LIỆU (OFFLINE / BATCH — dựng &amp; cập nhật index)" style="rounded=0;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#9673A6;dashed=1;verticalAlign=top;fontStyle=1;fontColor=#9673A6;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="40" y="90" width="360" height="620" as="geometry" />
+        </mxCell>
+        <mxCell id="cOn" value="ỨNG DỤNG TRỰC TUYẾN (ONLINE / SERVING — xử lý mỗi câu hỏi theo thời gian thực)" style="rounded=0;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#6C8EBF;dashed=1;verticalAlign=top;fontStyle=1;fontColor=#6C8EBF;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="430" y="90" width="640" height="560" as="geometry" />
+        </mxCell>
+        <mxCell id="cStore" value="KHO LƯU TRỮ (chia sẻ giữa ingest ghi vào ↔ serving đọc ra)" style="rounded=0;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#82B366;dashed=1;verticalAlign=top;fontStyle=1;fontColor=#82B366;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="430" y="700" width="640" height="160" as="geometry" />
+        </mxCell>
+        <mxCell id="cExt" value="DỊCH VỤ NGOÀI" style="rounded=0;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#B85450;dashed=1;verticalAlign=top;fontStyle=1;fontColor=#B85450;fontSize=12;" vertex="1" parent="1">
+          <mxGeometry x="1100" y="300" width="290" height="350" as="geometry" />
+        </mxCell>
+
+        <!-- OFFLINE nodes -->
+        <mxCell id="dvc" value="Cổng Dịch vụ công Quốc gia&#10;(API dichvucong.gov.vn)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F8CECC;strokeColor=#B85450;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="110" y="120" width="220" height="48" as="geometry" />
+        </mxCell>
+        <mxCell id="crawler" value="Crawler — crawl.py&#10;LIST + DETAIL · resume · retry" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#DAE8FC;strokeColor=#6C8EBF;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="110" y="198" width="220" height="52" as="geometry" />
+        </mxCell>
+        <mxCell id="raw" value="data/raw/*.json  (5.208 thủ tục)" style="shape=cylinder3;whiteSpace=wrap;html=1;fillColor=#F5F5F5;strokeColor=#666666;fontSize=10;boundedLbl=1;backgroundOutline=1;size=10;" vertex="1" parent="1">
+          <mxGeometry x="125" y="280" width="190" height="54" as="geometry" />
+        </mxCell>
+        <mxCell id="parser" value="Parser — parse.py&#10;chunk theo SECTION + metadata" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#DAE8FC;strokeColor=#6C8EBF;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="110" y="364" width="220" height="52" as="geometry" />
+        </mxCell>
+        <mxCell id="corpus" value="corpus:  md/  +  chunks.jsonl" style="shape=cylinder3;whiteSpace=wrap;html=1;fillColor=#E1D5E7;strokeColor=#9673A6;fontSize=10;boundedLbl=1;backgroundOutline=1;size=10;" vertex="1" parent="1">
+          <mxGeometry x="125" y="448" width="190" height="54" as="geometry" />
+        </mxCell>
+        <mxCell id="ingest" value="Ingest — fast_ingest.py&#10;embedding SONG SONG → ghi 3 store" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#DAE8FC;strokeColor=#6C8EBF;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="110" y="536" width="220" height="58" as="geometry" />
+        </mxCell>
+
+        <!-- ONLINE nodes -->
+        <mxCell id="user" value="Người dùng (trình duyệt web)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#D5E8D4;strokeColor=#82B366;fontSize=12;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="610" y="108" width="280" height="42" as="geometry" />
+        </mxCell>
+        <mxCell id="frontend" value="FRONTEND — React 19 + Vite + Tailwind&#10;ChatView · MessageList · SourcesPanel · Mindmap · ModeSelect&#10;(hiển thị token streaming + trích dẫn 【n】 bấm được)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#DAE8FC;strokeColor=#6C8EBF;fontSize=10;align=center;" vertex="1" parent="1">
+          <mxGeometry x="470" y="176" width="560" height="78" as="geometry" />
+        </mxCell>
+        <mxCell id="backend" value="BACKEND — FastAPI (Server-Sent Events)&#10;Routers: chat · conversations · indices · settings · suggestions · system&#10;Engine: create_pipeline · stream_chat · build_citations  ·  store (lịch sử hội thoại)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#DAE8FC;strokeColor=#6C8EBF;fontSize=10;align=center;" vertex="1" parent="1">
+          <mxGeometry x="470" y="292" width="560" height="96" as="geometry" />
+        </mxCell>
+        <mxCell id="reasoning" value="REASONING (kotaemon) — chọn chế độ suy luận&#10;• ReAct Agent (mặc định) — đa bước, Corrective-RAG + web fallback&#10;• Trả lời nhanh (FullQAPipeline) — 1 lượt   ·   Decompose · ReWOO&#10;Hybrid retrieval (vector + BM25) → rerank bằng LLM → tổng hợp có 【n】" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#D4E1F5;strokeColor=#6C8EBF;fontSize=10;align=center;" vertex="1" parent="1">
+          <mxGeometry x="470" y="426" width="560" height="106" as="geometry" />
+        </mxCell>
+
+        <!-- STORAGE nodes -->
+        <mxCell id="chroma" value="Chroma&#10;vectorstore&#10;(vector/ngữ nghĩa)" style="shape=cylinder3;whiteSpace=wrap;html=1;fillColor=#F5F5F5;strokeColor=#666666;fontSize=10;boundedLbl=1;backgroundOutline=1;size=12;" vertex="1" parent="1">
+          <mxGeometry x="455" y="738" width="150" height="92" as="geometry" />
+        </mxCell>
+        <mxCell id="lance" value="LanceDB&#10;docstore + FTS&#10;(BM25/từ khóa)" style="shape=cylinder3;whiteSpace=wrap;html=1;fillColor=#F5F5F5;strokeColor=#666666;fontSize=10;boundedLbl=1;backgroundOutline=1;size=12;" vertex="1" parent="1">
+          <mxGeometry x="620" y="738" width="150" height="92" as="geometry" />
+        </mxCell>
+        <mxCell id="sqldb" value="sql.db&#10;quan hệ index&#10;+ hội thoại" style="shape=cylinder3;whiteSpace=wrap;html=1;fillColor=#F5F5F5;strokeColor=#666666;fontSize=10;boundedLbl=1;backgroundOutline=1;size=12;" vertex="1" parent="1">
+          <mxGeometry x="785" y="738" width="140" height="92" as="geometry" />
+        </mxCell>
+        <mxCell id="files" value="files/index_1&#10;bản sao .md" style="shape=cylinder3;whiteSpace=wrap;html=1;fillColor=#F5F5F5;strokeColor=#666666;fontSize=10;boundedLbl=1;backgroundOutline=1;size=12;" vertex="1" parent="1">
+          <mxGeometry x="935" y="738" width="120" height="92" as="geometry" />
+        </mxCell>
+
+        <!-- EXTERNAL nodes -->
+        <mxCell id="azure_llm" value="Azure OpenAI — gpt-4o&#10;(LLM sinh câu trả lời)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F8CECC;strokeColor=#B85450;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="1120" y="334" width="250" height="52" as="geometry" />
+        </mxCell>
+        <mxCell id="azure_emb" value="Azure OpenAI&#10;text-embedding-3-large (3072d)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F8CECC;strokeColor=#B85450;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="1120" y="402" width="250" height="52" as="geometry" />
+        </mxCell>
+        <mxCell id="brave" value="Brave Search&#10;(web fallback)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F8CECC;strokeColor=#B85450;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="1120" y="470" width="250" height="48" as="geometry" />
+        </mxCell>
+        <mxCell id="cohere" value="Cohere rerank&#10;(tuỳ chọn)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F8CECC;strokeColor=#B85450;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="1120" y="532" width="250" height="48" as="geometry" />
+        </mxCell>
+
+        <!-- NOTES -->
+        <mxCell id="n_online" value="ONLINE: mỗi câu hỏi được stream token thời&#10;gian thực qua SSE. Lịch sử hội thoại, bước suy&#10;luận và nguồn trích dẫn được lưu theo từng lượt.&#10;Người dùng đổi chế độ trong ModeSelect:&#10;Suy luận sâu (ReAct) ↔ Trả lời nhanh." style="shape=note;whiteSpace=wrap;html=1;fillColor=#FFF2CC;strokeColor=#D6B656;fontSize=10;align=left;verticalAlign=top;size=14;" vertex="1" parent="1">
+          <mxGeometry x="1100" y="100" width="290" height="120" as="geometry" />
+        </mxCell>
+        <mxCell id="n_offline" value="OFFLINE: chạy theo mẻ khi dựng index hoặc cập&#10;nhật dữ liệu — TÁCH RỜI khỏi serving. Crawler resume&#10;được; ingest song song ~15 phút cho 5.208 thủ tục." style="shape=note;whiteSpace=wrap;html=1;fillColor=#FFF2CC;strokeColor=#D6B656;fontSize=10;align=left;verticalAlign=top;size=14;" vertex="1" parent="1">
+          <mxGeometry x="40" y="724" width="360" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="n_storage" value="HYBRID: Chroma (vector) + LanceDB (BM25) phục vụ truy hồi; rerank bằng LLM trước khi trả lời. sql.db lưu cả quan hệ index lẫn hội thoại; files giữ bản .md gốc để trích dẫn." style="shape=note;whiteSpace=wrap;html=1;fillColor=#FFF2CC;strokeColor=#D6B656;fontSize=10;align=left;verticalAlign=top;size=14;" vertex="1" parent="1">
+          <mxGeometry x="430" y="872" width="640" height="58" as="geometry" />
+        </mxCell>
+
+        <!-- OFFLINE chain edges -->
+        <mxCell id="eo1" value="HTTPS" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;fontSize=9;" edge="1" parent="1" source="dvc" target="crawler"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="eo2" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;" edge="1" parent="1" source="crawler" target="raw"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="eo3" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;" edge="1" parent="1" source="raw" target="parser"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="eo4" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;" edge="1" parent="1" source="parser" target="corpus"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="eo5" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;" edge="1" parent="1" source="corpus" target="ingest"><mxGeometry relative="1" as="geometry" /></mxCell>
+
+        <!-- ingest -> stores (write) -->
+        <mxCell id="ew1" value="ghi index" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;dashed=1;strokeColor=#666666;fontSize=9;exitX=0.5;exitY=1;exitDx=0;exitDy=0;" edge="1" parent="1" source="ingest" target="chroma">
+          <mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="220" y="678" /><mxPoint x="530" y="678" /></Array></mxGeometry>
+        </mxCell>
+        <mxCell id="ew2" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;dashed=1;strokeColor=#666666;" edge="1" parent="1" source="ingest" target="lance">
+          <mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="240" y="690" /><mxPoint x="695" y="690" /></Array></mxGeometry>
+        </mxCell>
+        <mxCell id="ew3" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;dashed=1;strokeColor=#666666;" edge="1" parent="1" source="ingest" target="sqldb">
+          <mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="260" y="684" /><mxPoint x="855" y="684" /></Array></mxGeometry>
+        </mxCell>
+
+        <!-- ingest -> azure embedding -->
+        <mxCell id="ee1" value="embedding" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;dashed=1;strokeColor=#B85450;fontSize=9;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="ingest" target="azure_emb">
+          <mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="412" y="565" /><mxPoint x="412" y="666" /><mxPoint x="1085" y="666" /><mxPoint x="1085" y="428" /></Array></mxGeometry>
+        </mxCell>
+
+        <!-- ONLINE stack edges -->
+        <mxCell id="en1" value="HTTP / SSE" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;startArrow=block;endArrow=block;fontSize=10;" edge="1" parent="1" source="user" target="frontend"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="en2" value="REST + SSE stream" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;startArrow=block;endArrow=block;fontSize=10;" edge="1" parent="1" source="frontend" target="backend"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="en3" value="create_pipeline / stream" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;startArrow=block;endArrow=block;fontSize=10;" edge="1" parent="1" source="backend" target="reasoning"><mxGeometry relative="1" as="geometry" /></mxCell>
+
+        <!-- reasoning -> stores (read) -->
+        <mxCell id="er1" value="truy hồi (hybrid)" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;startArrow=block;endArrow=block;dashed=1;strokeColor=#82B366;fontSize=9;exitX=0.25;exitY=1;exitDx=0;exitDy=0;" edge="1" parent="1" source="reasoning" target="chroma"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="er2" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;startArrow=block;endArrow=block;dashed=1;strokeColor=#82B366;exitX=0.45;exitY=1;exitDx=0;exitDy=0;" edge="1" parent="1" source="reasoning" target="lance"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="er3" value="hội thoại" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;startArrow=block;endArrow=block;dashed=1;strokeColor=#82B366;fontSize=9;exitX=0.7;exitY=1;exitDx=0;exitDy=0;" edge="1" parent="1" source="reasoning" target="sqldb"><mxGeometry relative="1" as="geometry" /></mxCell>
+
+        <!-- reasoning -> external -->
+        <mxCell id="ex1" value="sinh đáp án" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;dashed=1;strokeColor=#B85450;fontSize=9;exitX=1;exitY=0.4;exitDx=0;exitDy=0;" edge="1" parent="1" source="reasoning" target="azure_llm">
+          <mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="1085" y="468" /><mxPoint x="1085" y="360" /></Array></mxGeometry>
+        </mxCell>
+        <mxCell id="ex2" value="web fallback" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;dashed=1;strokeColor=#B85450;fontSize=9;exitX=1;exitY=0.6;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="reasoning" target="brave"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="ex3" value="rerank" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;dashed=1;strokeColor=#B85450;fontSize=9;exitX=1;exitY=0.8;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" edge="1" parent="1" source="reasoning" target="cohere"><mxGeometry relative="1" as="geometry" /></mxCell>
+
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>
