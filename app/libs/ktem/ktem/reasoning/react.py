@@ -295,13 +295,16 @@ class ContextualizeQuestionPipeline(BaseComponent):
     lang: str = "English"
     n_last_interactions: int = 5
 
-    def run(self, question: str, history: list) -> Document:  # type: ignore
-        if not history:
+    def run(self, question: str, history: list, extra_context: str = "") -> Document:  # type: ignore
+        # extra_context = khối memory (tóm tắt Lớp A + ký ức Lớp B) tiêm thêm vào lịch
+        # sử để giải tham chiếu vượt ra ngoài cửa sổ n_last_interactions lượt gần nhất.
+        if not history and not extra_context:
             return Document(text=question)
-        chat_history = "\n".join(
+        recent = "\n".join(
             f"Người dùng: {human}\nTrợ lý: {ai}"
             for human, ai in history[-self.n_last_interactions :]
         )
+        chat_history = f"{extra_context}\n\n{recent}".strip() if extra_context else recent
         prompt = PromptTemplate(self.contextualize_template).populate(
             chat_history=chat_history,
             question=question,
@@ -378,6 +381,10 @@ class ReactAgentPipeline(BaseReasoning):
     # Bể gom nguồn cho mỗi request (reset trong get_pipeline). Các tool docsearch/web_search
     # append nguồn vào đây qua doc_sink.
     collected_docs: list = []
+    # Memory (rag/memory.py) — gán trong get_pipeline; None = tắt. user_id để khoá ký
+    # ức Lớp B (lấy từ retriever; mặc định "default" khi chưa có auth).
+    memory: object = None
+    user_id: str = "default"
 
     def _plan_subquestions(self, question: str) -> list:
         """Hướng 1: gọi planner tách câu hỏi → list câu con. Câu đơn (hoặc planner
@@ -762,14 +769,34 @@ class ReactAgentPipeline(BaseReasoning):
         # Reset kết quả assemble của request trước (xem _assemble_by_procedure +
         # _dedup_collected). collected_docs đã được reset ở get_pipeline.
         self._assembled_docs = None
+        # ---- Memory (rag/memory.py): tóm tắt lượt cũ (Lớp A) + recall ký ức dài hạn
+        # (Lớp B) TRƯỚC contextualize, để giải tham chiếu vượt cửa sổ lịch sử ngắn và
+        # nối mạch xuyên hội thoại. Bọc try/except: memory KHÔNG được làm chết câu trả lời.
+        extra_context = ""
+        mem = getattr(self, "memory", None)
+        if mem is not None and getattr(mem, "active", False):
+            try:
+                summary = mem.summarize(history)
+                recalled = mem.recall(self.user_id, message, conv_id=conv_id)
+                extra_context = mem.build_extra_context(summary, recalled)
+                if recalled:
+                    yield Document(
+                        channel="info",
+                        content="🧠 Nhớ lại từ trước: " + " | ".join(recalled),
+                    )
+            except Exception as e:  # noqa: BLE001
+                logger.warning("Memory recall lỗi (bỏ qua): %s", e)
+                extra_context = ""
+
         # ---- Contextualize: giải tham chiếu ngầm của câu hỏi follow-up bằng history,
         # TRƯỚC khi agent (pha 1) gom nguồn — vì agent stateless với history. Chỉ chạy
-        # khi CÓ history (lượt thứ 2 trở đi); lượt đầu giữ nguyên, không tốn lời gọi LLM.
+        # khi CÓ history (lượt thứ 2 trở đi) HOẶC có khối memory; lượt đầu không memory
+        # thì giữ nguyên, không tốn lời gọi LLM.
         # Cả pha 1 (retrieve) lẫn pha 2 (synthesis) dùng chung câu đã contextualize để
         # nhất quán; pha 2 vẫn nhận history nên không mất giọng hội thoại.
-        if history:
+        if history or extra_context:
             contextualized = self.contextualize_pipeline(
-                question=message, history=history
+                question=message, history=history, extra_context=extra_context
             )
             standalone = (contextualized.text or "").strip()
             if standalone and standalone != message:
@@ -903,6 +930,14 @@ class ReactAgentPipeline(BaseReasoning):
 
         yield from self.show_citations_and_addons(answer, docs, message)
 
+        # ---- Memory (Lớp B ghi): lưu lượt vừa xong vào ký ức dài hạn. Dùng `message`
+        # (đã contextualize thành câu hỏi độc lập) để recall sau này khớp tốt hơn.
+        if mem is not None and getattr(mem, "episodic", None) is not None:
+            try:
+                mem.observe(self.user_id, conv_id, message, answer.text)
+            except Exception as e:  # noqa: BLE001
+                logger.warning("Memory observe lỗi (bỏ qua): %s", e)
+
         return answer
 
     def _mark_web_citations(self, answer, docs) -> str | None:
@@ -990,6 +1025,29 @@ class ReactAgentPipeline(BaseReasoning):
         pipeline.contextualize_pipeline.n_last_interactions = settings[
             f"{prefix}.n_last_interactions"
         ]
+        # ---- Memory (rag/memory.py): khởi tạo theo cờ môi trường (MEM_SUMMARY/
+        # MEM_EPISODIC/MEM_FACTS). user_id lấy từ retriever (engine gán obj.user_id)
+        # để khoá ký ức Lớp B; mặc định "default" khi chưa có auth. Lỗi khởi tạo
+        # memory không được chặn pipeline → bọc try/except, fallback tắt memory.
+        try:
+            from rag.memory import MemoryManager
+
+            user_id = next(
+                (getattr(r, "user_id", None) for r in (retrievers or [])
+                 if getattr(r, "user_id", None)),
+                "default",
+            )
+            keep_recent = settings[f"{prefix}.n_last_interactions"]
+            pipeline.user_id = user_id
+            pipeline.memory = MemoryManager.from_env(
+                llm=llm,
+                lang=pipeline.agent.output_lang,
+                embedding=embeddings.get_default(),
+                keep_recent=keep_recent,
+            )
+        except Exception as e:  # noqa: BLE001
+            logger.warning("Không khởi tạo được memory (bỏ qua): %s", e)
+            pipeline.memory = None
         # Phase-0 planner (Hướng 1) dùng cùng LLM.
         pipeline.decompose_pipeline.llm = llm
         pipeline.agent.prompt_template = PromptTemplate(settings[f"{prefix}.qa_prompt"])

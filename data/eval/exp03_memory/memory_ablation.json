@@ -1,0 +1,104 @@
+{
+  "config": {
+    "window": 2,
+    "keep_recent": 2
+  },
+  "B1_summary": {
+    "n": 4,
+    "baseline_acc": 0.0,
+    "summary_acc": 1.0,
+    "rows": [
+      {
+        "follow_up": "Thế lệ phí của thủ tục này là bao nhiêu?",
+        "expected": [
+          "hộ chiếu"
+        ],
+        "baseline": "Thế lệ phí của thủ tục khai sinh là bao nhiêu?",
+        "baseline_hit": false,
+        "with_summary": "Thế lệ phí của thủ tục xin cấp hộ chiếu phổ thông là bao nhiêu?",
+        "with_summary_hit": true
+      },
+      {
+        "follow_up": "Cơ quan nào có thẩm quyền giải quyết việc đó?",
+        "expected": [
+          "kết hôn"
+        ],
+        "baseline": "Cơ quan nào có thẩm quyền giải quyết việc nộp hồ sơ tại UBND cấp xã nơi cư trú?",
+        "baseline_hit": false,
+        "with_summary": "Cơ quan nào có thẩm quyền giải quyết việc đăng ký kết hôn?",
+        "with_summary_hit": true
+      },
+      {
+        "follow_up": "Thời hạn giải quyết thủ tục đó là bao lâu?",
+        "expected": [
+          "giấy phép xây dựng",
+          "xây dựng"
+        ],
+        "baseline": "Thời hạn giải quyết thủ tục nộp bản vẽ do đơn vị có chứng chỉ hành nghề lập là bao lâu?",
+        "baseline_hit": false,
+        "with_summary": "Thời hạn giải quyết thủ tục cấp giấy phép xây dựng nhà ở riêng lẻ là bao lâu?",
+        "with_summary_hit": true
+      },
+      {
+        "follow_up": "Vậy hồ sơ của việc đăng ký kia gồm những gì?",
+        "expected": [
+          "thường trú"
+        ],
+        "baseline": "Vậy hồ sơ của việc đăng ký khai sinh gồm những gì?",
+        "baseline_hit": false,
+        "with_summary": "Vậy hồ sơ của việc đăng ký thường trú cho con mới sinh gồm những gì?",
+        "with_summary_hit": true
+      }
+    ]
+  },
+  "B2_episodic": {
+    "n": 3,
+    "baseline_acc": 0.0,
+    "episodic_acc": 1.0,
+    "rows": [
+      {
+        "follow_up": "Khi đến nộp thì cần mang theo những gì?",
+        "expected": [
+          "hộ chiếu"
+        ],
+        "recalled": [
+          "Người dùng từng hỏi: Tôi đang làm thủ tục cấp hộ chiếu lần đầu ở Đà Nẵng\nĐáp: Bạn cần chuẩn bị CCCD và tờ khai..."
+        ],
+        "baseline": "Khi đến nộp thì cần mang theo những gì?",
+        "baseline_hit": false,
+        "with_episodic": "Khi đến nộp hồ sơ cấp hộ chiếu lần đầu ở Đà Nẵng thì cần mang theo những gì?",
+        "with_episodic_hit": true
+      },
+      {
+        "follow_up": "Lệ phí đăng ký là bao nhiêu?",
+        "expected": [
+          "kinh doanh",
+          "hộ cá thể",
+          "hộ kinh doanh"
+        ],
+        "recalled": [
+          "Người dùng từng hỏi: Tôi muốn đăng ký kinh doanh hộ cá thể bán cà phê\nĐáp: Hộ kinh doanh cần giấy đề nghị đăng ký..."
+        ],
+        "baseline": "Lệ phí đăng ký là bao nhiêu?",
+        "baseline_hit": false,
+        "with_episodic": "Lệ phí đăng ký kinh doanh hộ cá thể bán cà phê là bao nhiêu?",
+        "with_episodic_hit": true
+      },
+      {
+        "follow_up": "Hồ sơ gồm những giấy tờ nào?",
+        "expected": [
+          "giấy phép lái xe",
+          "lái xe",
+          "gplx"
+        ],
+        "recalled": [
+          "Người dùng từng hỏi: Tôi cần làm thủ tục cấp đổi giấy phép lái xe ô tô hạng B2\nĐáp: Bạn cần đơn, giấy khám sức khoẻ, GPLX cũ..."
+        ],
+        "baseline": "Hồ sơ gồm những giấy tờ nào?",
+        "baseline_hit": false,
+        "with_episodic": "Hồ sơ gồm những giấy tờ nào để làm thủ tục cấp đổi giấy phép lái xe ô tô hạng B2?",
+        "with_episodic_hit": true
+      }
+    ]
+  }
+}

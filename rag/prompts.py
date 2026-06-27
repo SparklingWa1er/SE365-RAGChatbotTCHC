@@ -299,3 +299,34 @@ TITLE_PROMPT_TEMPLATE = (
     "Câu hỏi của người dùng:\n{question}\n\n"
     "Đặt một tiêu đề ngắn gọn cho đoạn hội thoại này."
 )
+
+# ---------------------------------------------------------------------------
+# MEMORY (rag/memory.py) — 2 lớp: Summary-Buffer (ngắn hạn) + Episodic (dài hạn).
+# ---------------------------------------------------------------------------
+
+# Lớp A — tóm tắt các lượt CŨ (ngoài cửa sổ giữ nguyên văn) thành 1 đoạn cô đọng,
+# để giữ ngữ cảnh dài mà không phình token. Placeholder: {lang}, {chat_history}
+MEMORY_SUMMARY_PROMPT = (
+    "Dưới đây là phần ĐẦU của một cuộc hội thoại giữa người dùng và trợ lý thủ tục "
+    "hành chính công. Hãy tóm tắt thành MỘT đoạn ngắn (tối đa 5 câu), bằng {lang}, "
+    "giữ lại các MỐC quan trọng để hiểu các câu hỏi sau: tên thủ tục đang quan tâm, "
+    "cơ quan/đối tượng, tình huống cụ thể của người dùng (vd lần đầu/gia hạn, địa "
+    "phương), và kết luận chính trợ lý đã đưa ra. Bỏ lời chào và chi tiết vụn vặt. "
+    "Chỉ trả về đoạn tóm tắt, không tiền tố.\n\n"
+    "HỘI THOẠI:\n{chat_history}\n\n"
+    "TÓM TẮT: "
+)
+
+# Lớp B (semantic) — trích các "fact" BỀN VỮNG về người dùng/bối cảnh từ một lượt
+# hỏi-đáp, để ghi nhớ dài hạn xuyên hội thoại. Trả mỗi fact một dòng, hoặc đúng chữ
+# "KHÔNG" nếu lượt này không chứa thông tin đáng nhớ. Placeholder: {question},{answer}
+MEMORY_FACT_PROMPT = (
+    "Từ lượt hỏi-đáp dưới đây, hãy rút ra các THÔNG TIN BỀN VỮNG đáng ghi nhớ về "
+    "người dùng hoặc bối cảnh của họ để phục vụ các lần trò chuyện sau (vd: thủ tục "
+    "họ đang làm, địa phương, tình huống lần đầu/gia hạn, đối tượng áp dụng). "
+    "KHÔNG ghi lại kiến thức chung về thủ tục (đã có trong cơ sở dữ liệu). Mỗi thông "
+    "tin một dòng, ngắn gọn. Nếu không có gì đáng nhớ, chỉ trả về đúng chữ: KHÔNG.\n\n"
+    "NGƯỜI DÙNG HỎI: {question}\n"
+    "TRỢ LÝ TRẢ LỜI: {answer}\n\n"
+    "THÔNG TIN ĐÁNG NHỚ:"
+)
