@@ -82,3 +82,9 @@ present_content/
 # --- File báo cáo Word (không đẩy lên repo) ---
 *.docx
 ~$*.docx
+
+# --- Thư mục ảnh & báo cáo: file đã commit vẫn giữ nguyên; KHÔNG theo dõi file MỚI
+#     phát sinh (ảnh chụp mới, build LaTeX *.aux/*.out/*.log.txt...).
+#     Muốn thêm file mới trong các thư mục này: dùng `git add -f <file>`. ---
+images/
+report/
