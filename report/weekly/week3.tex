@@ -1,7 +1,7 @@
 \documentclass[11pt]{article}
 \usepackage{weekly}
 \begin{document}
-\weekheader{3}{13/06 \textendash{} 22/06/2026}{Agentic RAG, Tích hợp và Minh bạch hoá}{w3col}{Đang hoàn thiện}
+\weekheader{3}{13/06 \textendash{} 22/06/2026}{Agentic RAG, Tích hợp và Minh bạch hoá}{w3col}{Đã hoàn thành}
 
 \section{Mục tiêu tuần}
 Tuần thứ ba nâng hệ thống từ suy luận một lượt lên kiến trúc Agentic RAG: một tác tử (agent)
@@ -108,6 +108,57 @@ trước rồi mới thực thi và tổng hợp, giúp giảm số lượt gọ
 ReWOO) dùng chung lõi truy hồi và lõi tổng hợp có trích dẫn, việc chuyển đổi chỉ là thiết lập
 cấu hình lúc chạy.
 
+\section{Thực nghiệm: đánh giá tầng truy hồi}
+Truy hồi là nền tảng của tác tử, nên nhóm xây dựng một bộ dữ liệu đánh giá có nhãn và đo định
+lượng tầng này.
+
+\paragraph{Xây dựng bộ dữ liệu (Ground Truth): }
+Bộ đánh giá gồm 210 câu: 180 câu sinh tự động bằng gpt-4o (phân tầng theo lĩnh vực) và 30 câu
+viết tay gắn các thủ tục dân sinh có thật. 180 câu tự sinh chia đều thành sáu nhóm (mỗi nhóm
+30 câu), mỗi nhóm kiểm một năng lực: khớp từ khoá (\texttt{factual}), diễn giải ngữ nghĩa
+(\texttt{paraphrase}), câu tình huống gián tiếp (\texttt{scenario}), khía cạnh hồ sơ
+(\texttt{aspect\_hoso}), khía cạnh phí/điều kiện (\texttt{aspect\_phi\_dk}) và truy vấn ngắn
+(\texttt{keyword\_short}). Để chống thiên lệch BM25, ba nhóm \texttt{paraphrase}, \texttt{scenario},
+\texttt{keyword\_short} chỉ cho mô hình thấy tên thủ tục (không cho text chunk), nên câu hỏi
+không lặp nguyên văn từ khoá tài liệu. 30 câu viết tay gồm 20 câu in-scope và 10 câu ngoài
+phạm vi để đo cổng lọc.
+
+\paragraph{Độ đo và quy trình chấm: }
+Khoá khớp gold là mã thủ tục. Với mỗi câu, hệ truy hồi trên toàn corpus, lấy top-20, khử trùng
+theo thủ tục (giữ hạng tốt nhất), rồi tính Hit@$k$ (có ít nhất một gold trong top-$k$),
+Recall@5, MRR (nghịch đảo hạng của gold đầu tiên) và nDCG@10. Với cỡ mẫu 180 câu, khoảng tin
+cậy 95\% của tỉ lệ vào khoảng $\pm$4\%. Toàn bộ số liệu được sinh tự động bằng bộ script
+\texttt{rag/eval/*}.
+
+\paragraph{Kết quả: }
+Bảng~\ref{tab:w3-retr} so sánh cấu hình lai (hybrid: vector + BM25, có rerank) với cấu hình chỉ
+dùng vector. Hit@5 đạt 0,922 và Hit@10 đạt 0,972 --- tài liệu đúng gần như luôn nằm trong
+top-10. Đáng chú ý, cấu hình chỉ-vector cho kết quả tương đương (Hit@5 0,922; MRR 0,781), cho
+thấy embedding đa ngôn ngữ gánh gần hết còn BM25 đóng góp biên trên miền dữ liệu này. Điểm yếu
+nằm ở hạng \#1 (Hit@1 0,661) với truy vấn ngắn (\texttt{keyword\_short} 0,533) và câu tình
+huống (\texttt{scenario} 0,600), không phải ở recall. Về cổng lọc ``không tìm thấy'': tỉ lệ từ
+chối đúng câu ngoài phạm vi đạt 100\% (10/10, không tài liệu nào lọt), nhưng recall in-scope
+chỉ 0,65 --- cổng hơi gắt, đôi khi loại nhầm thủ tục đúng.
+
+\begin{table}[H]
+\centering\small
+\renewcommand{\arraystretch}{1.2}
+\begin{tabular}{@{}lrr@{}}
+\toprule
+Chỉ số & Hybrid & Chỉ-vector \\
+\midrule
+Hit@1 & 0,661 & 0,667 \\
+Hit@3 & 0,861 & 0,889 \\
+Hit@5 & 0,922 & 0,922 \\
+Hit@10 & 0,972 & 0,956 \\
+MRR & 0,775 & 0,781 \\
+nDCG@10 & 0,823 & 0,824 \\
+\bottomrule
+\end{tabular}
+\caption{Đánh giá tầng truy hồi (n=180): cấu hình lai so với chỉ-vector.}
+\label{tab:w3-retr}
+\end{table}
+
 \section{Kết quả và sản phẩm bàn giao}
 \begin{table}[H]
 \centering\small
@@ -145,10 +196,11 @@ Tiện ích minh bạch & Trích dẫn 【n】 và tô sáng, nhãn nguồn web,
   \cbDone Trích dẫn nội dòng và tô sáng, nhãn nguồn web, mindmap, gợi ý follow-up.
   \cbDone Contextualize hội thoại đa lượt; chiến lược thay thế ReWOO.
   \cbDone Tích hợp backend FastAPI (SSE) và frontend React.
-  \cbWip Đánh giá agentic so với baseline (độ chính xác, độ phủ nguồn) và phân tích lỗi.
+  \cbDone Thực nghiệm đánh giá tầng truy hồi (bộ 180+30 câu; Hit@5 0,922, MRR 0,775).
 \end{itemize}
 
-\noindent Hướng tuần kế tiếp: tổng quát hoá tầng LLM để chạy đa nhà cung cấp (Azure, OpenAI,
-vLLM) và hoàn thiện báo cáo.
+\noindent Hướng tuần kế tiếp: bổ sung bộ nhớ hội thoại đa lượt (tóm tắt ngắn hạn và ký ức dài
+hạn), tính năng định vị cơ quan xử lý thủ tục kèm bản đồ và chỉ đường, và đánh giá định lượng
+toàn hệ thống (truy hồi, sinh câu trả lời và trích dẫn, bộ nhớ).
 
 \end{document}

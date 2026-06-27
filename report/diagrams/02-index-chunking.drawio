@@ -5,124 +5,113 @@
         <mxCell id="0" />
         <mxCell id="1" parent="0" />
 
-        <mxCell id="title" value="QUÁ TRÌNH INDEX &amp; CHUNKING DỮ LIỆU&#10;parse.py (chunk theo section) → fast_ingest.py (embedding song song → 3 store)" style="text;html=1;align=center;verticalAlign=middle;fontSize=16;fontStyle=1;fillColor=none;" vertex="1" parent="1">
+        <mxCell id="title" value="QUÁ TRÌNH INDEX &amp; CHUNKING DỮ LIỆU&#10;(parse &amp; cắt đoạn → embedding → kho lưu trữ)" style="text;html=1;align=center;verticalAlign=middle;fontSize=16;fontStyle=1;fillColor=none;" vertex="1" parent="1">
           <mxGeometry x="120" y="16" width="840" height="46" as="geometry" />
         </mxCell>
 
-        <!-- containers (behind) -->
-        <mxCell id="cParse" value="BƯỚC 1 — PARSE &amp; CHUNKING THEO SECTION (pipeline/parser/parse.py)" style="rounded=0;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#9673A6;dashed=1;verticalAlign=top;fontStyle=1;fontColor=#9673A6;fontSize=12;" vertex="1" parent="1">
+        <mxCell id="cParse" value="BƯỚC 1 — PARSE &amp; CẮT ĐOẠN THEO MỤC" style="rounded=0;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#9673A6;dashed=1;verticalAlign=top;fontStyle=1;fontColor=#9673A6;fontSize=12;" vertex="1" parent="1">
           <mxGeometry x="60" y="180" width="760" height="430" as="geometry" />
         </mxCell>
-        <mxCell id="cIngest" value="BƯỚC 2 — INGEST SONG SONG &amp; EMBEDDING (rag/fast_ingest.py)" style="rounded=0;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#6C8EBF;dashed=1;verticalAlign=top;fontStyle=1;fontColor=#6C8EBF;fontSize=12;" vertex="1" parent="1">
+        <mxCell id="cIngest" value="BƯỚC 2 — EMBEDDING &amp; LẬP CHỈ MỤC" style="rounded=0;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#6C8EBF;dashed=1;verticalAlign=top;fontStyle=1;fontColor=#6C8EBF;fontSize=12;" vertex="1" parent="1">
           <mxGeometry x="60" y="800" width="760" height="520" as="geometry" />
         </mxCell>
-        <mxCell id="cStore" value="KHO LƯU TRỮ — phục vụ HYBRID RETRIEVAL" style="rounded=0;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#82B366;dashed=1;verticalAlign=top;fontStyle=1;fontColor=#82B366;fontSize=12;" vertex="1" parent="1">
+        <mxCell id="cStore" value="KHO LƯU TRỮ (phục vụ truy hồi)" style="rounded=0;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#82B366;dashed=1;verticalAlign=top;fontStyle=1;fontColor=#82B366;fontSize=12;" vertex="1" parent="1">
           <mxGeometry x="60" y="1360" width="760" height="160" as="geometry" />
         </mxCell>
 
-        <!-- inputs -->
-        <mxCell id="in_raw" value="data/raw/*.json&#10;(5.208 thủ tục thô)" style="shape=cylinder3;whiteSpace=wrap;html=1;fillColor=#F5F5F5;strokeColor=#666666;fontSize=10;boundedLbl=1;backgroundOutline=1;size=12;" vertex="1" parent="1">
+        <mxCell id="in_raw" value="data/raw&#10;(JSON thô)" style="shape=cylinder3;whiteSpace=wrap;html=1;fillColor=#F5F5F5;strokeColor=#666666;fontSize=10;boundedLbl=1;backgroundOutline=1;size=12;" vertex="1" parent="1">
           <mxGeometry x="300" y="84" width="170" height="66" as="geometry" />
         </mxCell>
-        <mxCell id="in_index" value="data/index.jsonl&#10;(metadata danh sách)" style="shape=cylinder3;whiteSpace=wrap;html=1;fillColor=#F5F5F5;strokeColor=#666666;fontSize=10;boundedLbl=1;backgroundOutline=1;size=12;" vertex="1" parent="1">
+        <mxCell id="in_index" value="index.jsonl&#10;(metadata)" style="shape=cylinder3;whiteSpace=wrap;html=1;fillColor=#F5F5F5;strokeColor=#666666;fontSize=10;boundedLbl=1;backgroundOutline=1;size=12;" vertex="1" parent="1">
           <mxGeometry x="500" y="84" width="170" height="66" as="geometry" />
         </mxCell>
 
-        <!-- PARSE nodes -->
-        <mxCell id="p_loadidx" value="load_index(): map id → item&#10;(bổ sung metadata khi detail trống)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#DAE8FC;strokeColor=#6C8EBF;fontSize=10;" vertex="1" parent="1">
+        <mxCell id="p_loadidx" value="Đọc metadata danh sách" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#DAE8FC;strokeColor=#6C8EBF;fontSize=11;" vertex="1" parent="1">
           <mxGeometry x="350" y="214" width="260" height="48" as="geometry" />
         </mxCell>
-        <mxCell id="p_meta" value="extract_meta(): gộp detail + index →&#10;mã thủ tục · tên · lĩnh vực · cấp · cơ quan&#10;· đối tượng · loại · url" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#DAE8FC;strokeColor=#6C8EBF;fontSize=10;" vertex="1" parent="1">
-          <mxGeometry x="350" y="288" width="260" height="62" as="geometry" />
+        <mxCell id="p_meta" value="Trích metadata&#10;(mã, lĩnh vực, cấp, cơ quan…)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#DAE8FC;strokeColor=#6C8EBF;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="350" y="288" width="260" height="58" as="geometry" />
         </mxCell>
-        <mxCell id="p_render" value="Render 8 SECTION sạch (clean / oneline):&#10;Trình tự · Cách thức · Phí, lệ phí · Hồ sơ&#10;Địa chỉ · Điều kiện · Căn cứ pháp lý · Kết quả" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#DAE8FC;strokeColor=#6C8EBF;fontSize=10;" vertex="1" parent="1">
-          <mxGeometry x="350" y="376" width="260" height="70" as="geometry" />
+        <mxCell id="p_render" value="Tách nội dung thành các MỤC&#10;(hồ sơ, trình tự, lệ phí, kết quả…)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#DAE8FC;strokeColor=#6C8EBF;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="350" y="376" width="260" height="58" as="geometry" />
         </mxCell>
-        <mxCell id="p_empty" value="Có section&#10;không rỗng?" style="rhombus;whiteSpace=wrap;html=1;fillColor=#FFE6CC;strokeColor=#D79B00;fontSize=10;" vertex="1" parent="1">
+        <mxCell id="p_empty" value="Có nội dung?" style="rhombus;whiteSpace=wrap;html=1;fillColor=#FFE6CC;strokeColor=#D79B00;fontSize=11;" vertex="1" parent="1">
           <mxGeometry x="400" y="470" width="160" height="74" as="geometry" />
         </mxCell>
-        <mxCell id="p_skip" value="Bỏ qua&#10;(file rỗng)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F8CECC;strokeColor=#B85450;fontSize=10;" vertex="1" parent="1">
+        <mxCell id="p_skip" value="Bỏ qua" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F8CECC;strokeColor=#B85450;fontSize=11;" vertex="1" parent="1">
           <mxGeometry x="140" y="478" width="130" height="56" as="geometry" />
         </mxCell>
-        <mxCell id="p_write" value="build_markdown(): YAML frontmatter + thân bài&#10;Sinh chunk theo section: text = &quot;[Tên — Phần]\n&lt;nội dung&gt;&quot; + metadata" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#DAE8FC;strokeColor=#6C8EBF;fontSize=10;" vertex="1" parent="1">
-          <mxGeometry x="350" y="556" width="260" height="44" as="geometry" />
+        <mxCell id="p_write" value="Tạo file Markdown&#10;+ cắt đoạn theo mục" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#DAE8FC;strokeColor=#6C8EBF;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="350" y="556" width="260" height="48" as="geometry" />
         </mxCell>
 
-        <!-- corpus outputs (bridge) -->
-        <mxCell id="o_md" value="data/corpus/md/&#10;{ma}__{uuid}.md" style="shape=cylinder3;whiteSpace=wrap;html=1;fillColor=#E1D5E7;strokeColor=#9673A6;fontSize=10;boundedLbl=1;backgroundOutline=1;size=12;" vertex="1" parent="1">
+        <mxCell id="o_md" value="corpus&#10;(Markdown)" style="shape=cylinder3;whiteSpace=wrap;html=1;fillColor=#E1D5E7;strokeColor=#9673A6;fontSize=10;boundedLbl=1;backgroundOutline=1;size=12;" vertex="1" parent="1">
           <mxGeometry x="200" y="652" width="160" height="60" as="geometry" />
         </mxCell>
-        <mxCell id="o_chunks" value="chunks.jsonl&#10;(1 dòng = 1 section)" style="shape=cylinder3;whiteSpace=wrap;html=1;fillColor=#E1D5E7;strokeColor=#9673A6;fontSize=10;boundedLbl=1;backgroundOutline=1;size=12;" vertex="1" parent="1">
+        <mxCell id="o_chunks" value="các đoạn (chunks)" style="shape=cylinder3;whiteSpace=wrap;html=1;fillColor=#E1D5E7;strokeColor=#9673A6;fontSize=10;boundedLbl=1;backgroundOutline=1;size=12;" vertex="1" parent="1">
           <mxGeometry x="400" y="652" width="160" height="60" as="geometry" />
         </mxCell>
-        <mxCell id="o_meta" value="metadata.jsonl" style="shape=cylinder3;whiteSpace=wrap;html=1;fillColor=#E1D5E7;strokeColor=#9673A6;fontSize=10;boundedLbl=1;backgroundOutline=1;size=12;" vertex="1" parent="1">
+        <mxCell id="o_meta" value="metadata" style="shape=cylinder3;whiteSpace=wrap;html=1;fillColor=#E1D5E7;strokeColor=#9673A6;fontSize=10;boundedLbl=1;backgroundOutline=1;size=12;" vertex="1" parent="1">
           <mxGeometry x="600" y="652" width="140" height="60" as="geometry" />
         </mxCell>
 
-        <!-- INGEST nodes -->
-        <mxCell id="i_prep" value="Đọc chunks.jsonl → gom theo doc_id&#10;map uuid → .md  ·  bỏ file đã có trong sql.db (resume)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#DAE8FC;strokeColor=#6C8EBF;fontSize=10;" vertex="1" parent="1">
+        <mxCell id="i_prep" value="Đọc các đoạn&#10;+ bỏ qua đoạn đã nạp (resume)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#DAE8FC;strokeColor=#6C8EBF;fontSize=11;" vertex="1" parent="1">
           <mxGeometry x="330" y="828" width="300" height="54" as="geometry" />
         </mxCell>
-        <mxCell id="i_split" value="split_long_text(): section &gt; 8000 token&#10;→ cắt theo DÒNG, giữ lại tiền tố [Tên — Phần]" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#DAE8FC;strokeColor=#6C8EBF;fontSize=10;" vertex="1" parent="1">
-          <mxGeometry x="330" y="908" width="300" height="56" as="geometry" />
+        <mxCell id="i_split" value="Cắt nhỏ đoạn quá dài" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#DAE8FC;strokeColor=#6C8EBF;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="330" y="908" width="300" height="48" as="geometry" />
         </mxCell>
-        <mxCell id="i_embed" value="embed_batch() — gọi API embedding theo lô 16&#10;(retry khi rate-limit)  →  vector 3072 chiều" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#DAE8FC;strokeColor=#6C8EBF;fontSize=10;" vertex="1" parent="1">
-          <mxGeometry x="330" y="990" width="300" height="56" as="geometry" />
+        <mxCell id="i_embed" value="Tạo vector nhúng (embedding)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#DAE8FC;strokeColor=#6C8EBF;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="330" y="982" width="300" height="48" as="geometry" />
         </mxCell>
-        <mxCell id="ext_azure" value="Azure OpenAI&#10;text-embedding-3-large" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F8CECC;strokeColor=#B85450;fontSize=10;" vertex="1" parent="1">
-          <mxGeometry x="670" y="990" width="130" height="56" as="geometry" />
+        <mxCell id="ext_azure" value="Mô hình Embedding&#10;(Azure OpenAI)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#F8CECC;strokeColor=#B85450;fontSize=10;" vertex="1" parent="1">
+          <mxGeometry x="670" y="982" width="130" height="48" as="geometry" />
         </mxCell>
-        <mxCell id="i_write" value="Ghi TUẦN TỰ vào store (Phase 2):&#10;• sql.db: 1 source + 2 dòng/chunk (document + vector)&#10;• LanceDB docstore  ·  • Chroma vectorstore&#10;• copy .md → files/index_1/&lt;sha256&gt;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#DAE8FC;strokeColor=#6C8EBF;fontSize=10;align=left;spacingLeft=8;" vertex="1" parent="1">
-          <mxGeometry x="330" y="1072" width="300" height="86" as="geometry" />
+        <mxCell id="i_write" value="Ghi vào kho lưu trữ&#10;(vector store · doc store · CSDL · file gốc)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#DAE8FC;strokeColor=#6C8EBF;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="330" y="1066" width="300" height="60" as="geometry" />
         </mxCell>
-        <mxCell id="i_check" value="Checkpoint integrity:&#10;đối chiếu số lượng sql.db ↔ Chroma&#10;↔ LanceDB + kiểm tra HNSW .bin" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFE6CC;strokeColor=#D79B00;fontSize=10;" vertex="1" parent="1">
-          <mxGeometry x="660" y="1078" width="150" height="74" as="geometry" />
+        <mxCell id="i_check" value="Kiểm tra&#10;tính toàn vẹn" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#FFE6CC;strokeColor=#D79B00;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="670" y="1072" width="140" height="50" as="geometry" />
         </mxCell>
-        <mxCell id="i_fts" value="Tạo FTS index trên LanceDB&#10;(BM25, tokenizer en_stem)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#DAE8FC;strokeColor=#6C8EBF;fontSize=10;" vertex="1" parent="1">
-          <mxGeometry x="330" y="1180" width="300" height="48" as="geometry" />
+        <mxCell id="i_fts" value="Tạo chỉ mục từ khóa (BM25)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#DAE8FC;strokeColor=#6C8EBF;fontSize=11;" vertex="1" parent="1">
+          <mxGeometry x="330" y="1170" width="300" height="48" as="geometry" />
         </mxCell>
-        <mxCell id="i_done" value="Hoàn tất index → sẵn sàng truy vấn RAG" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#D5E8D4;strokeColor=#82B366;fontSize=11;fontStyle=1;" vertex="1" parent="1">
-          <mxGeometry x="330" y="1260" width="300" height="40" as="geometry" />
+        <mxCell id="i_done" value="Hoàn tất → sẵn sàng truy vấn" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#D5E8D4;strokeColor=#82B366;fontSize=11;fontStyle=1;" vertex="1" parent="1">
+          <mxGeometry x="330" y="1256" width="300" height="42" as="geometry" />
         </mxCell>
 
-        <!-- STORES -->
-        <mxCell id="s_chroma" value="Chroma vectorstore&#10;(vector + HNSW)&#10;→ tìm theo NGỮ NGHĨA" style="shape=cylinder3;whiteSpace=wrap;html=1;fillColor=#F5F5F5;strokeColor=#666666;fontSize=10;boundedLbl=1;backgroundOutline=1;size=12;" vertex="1" parent="1">
+        <mxCell id="s_chroma" value="Vector store&#10;(tìm theo ngữ nghĩa)" style="shape=cylinder3;whiteSpace=wrap;html=1;fillColor=#F5F5F5;strokeColor=#666666;fontSize=10;boundedLbl=1;backgroundOutline=1;size=12;" vertex="1" parent="1">
           <mxGeometry x="110" y="1396" width="160" height="92" as="geometry" />
         </mxCell>
-        <mxCell id="s_lance" value="LanceDB&#10;docstore + FTS (BM25)&#10;→ tìm theo TỪ KHÓA" style="shape=cylinder3;whiteSpace=wrap;html=1;fillColor=#F5F5F5;strokeColor=#666666;fontSize=10;boundedLbl=1;backgroundOutline=1;size=12;" vertex="1" parent="1">
+        <mxCell id="s_lance" value="Doc store + BM25&#10;(tìm theo từ khóa)" style="shape=cylinder3;whiteSpace=wrap;html=1;fillColor=#F5F5F5;strokeColor=#666666;fontSize=10;boundedLbl=1;backgroundOutline=1;size=12;" vertex="1" parent="1">
           <mxGeometry x="300" y="1396" width="160" height="92" as="geometry" />
         </mxCell>
-        <mxCell id="s_sql" value="sql.db&#10;source + quan hệ&#10;(document / vector)" style="shape=cylinder3;whiteSpace=wrap;html=1;fillColor=#F5F5F5;strokeColor=#666666;fontSize=10;boundedLbl=1;backgroundOutline=1;size=12;" vertex="1" parent="1">
+        <mxCell id="s_sql" value="CSDL&#10;(nguồn + quan hệ)" style="shape=cylinder3;whiteSpace=wrap;html=1;fillColor=#F5F5F5;strokeColor=#666666;fontSize=10;boundedLbl=1;backgroundOutline=1;size=12;" vertex="1" parent="1">
           <mxGeometry x="490" y="1396" width="150" height="92" as="geometry" />
         </mxCell>
-        <mxCell id="s_files" value="files/index_1&#10;bản sao .md" style="shape=cylinder3;whiteSpace=wrap;html=1;fillColor=#F5F5F5;strokeColor=#666666;fontSize=10;boundedLbl=1;backgroundOutline=1;size=12;" vertex="1" parent="1">
+        <mxCell id="s_files" value="File gốc&#10;(.md)" style="shape=cylinder3;whiteSpace=wrap;html=1;fillColor=#F5F5F5;strokeColor=#666666;fontSize=10;boundedLbl=1;backgroundOutline=1;size=12;" vertex="1" parent="1">
           <mxGeometry x="660" y="1396" width="140" height="92" as="geometry" />
         </mxCell>
 
-        <!-- NOTES -->
-        <mxCell id="n_chunk" value="CHIẾN LƯỢC CHUNKING:&#10;cắt theo SECTION (ngữ nghĩa), KHÔNG cắt&#10;cứng theo độ dài. Mỗi chunk tự mang tiền tố&#10;[Tên thủ tục — Tên phần] để không mất ngữ&#10;cảnh khi đứng độc lập lúc truy hồi." style="shape=note;whiteSpace=wrap;html=1;fillColor=#FFF2CC;strokeColor=#D6B656;fontSize=10;align=left;verticalAlign=top;size=14;" vertex="1" parent="1">
-          <mxGeometry x="850" y="350" width="270" height="120" as="geometry" />
+        <mxCell id="n_chunk" value="Cắt theo MỤC nội dung (ngữ nghĩa); mỗi đoạn giữ tiền tố [Tên thủ tục — Mục] để không mất ngữ cảnh khi truy hồi." style="shape=note;whiteSpace=wrap;html=1;fillColor=#FFF2CC;strokeColor=#D6B656;fontSize=11;align=left;verticalAlign=top;size=14;" vertex="1" parent="1">
+          <mxGeometry x="850" y="356" width="270" height="96" as="geometry" />
         </mxCell>
-        <mxCell id="n_batch" value="Lặp cho TOÀN BỘ 5.208 file.&#10;File không có section nào → bỏ qua." style="shape=note;whiteSpace=wrap;html=1;fillColor=#FFF2CC;strokeColor=#D6B656;fontSize=10;align=left;verticalAlign=top;size=14;" vertex="1" parent="1">
-          <mxGeometry x="850" y="490" width="270" height="64" as="geometry" />
+        <mxCell id="n_parallel" value="Embedding chạy SONG SONG để tăng tốc; tách riêng với bước ghi vào kho." style="shape=note;whiteSpace=wrap;html=1;fillColor=#FFF2CC;strokeColor=#D6B656;fontSize=11;align=left;verticalAlign=top;size=14;" vertex="1" parent="1">
+          <mxGeometry x="850" y="966" width="290" height="80" as="geometry" />
         </mxCell>
-        <mxCell id="n_parallel" value="SONG SONG: ThreadPoolExecutor 10 worker,&#10;lô 16 chunk/lần gọi → ~15 phút thay vì ~2,5 giờ.&#10;Bypass theflow cache → không treo khi force-kill.&#10;Phase 1 (embed song song) tách Phase 2 (ghi tuần tự)." style="shape=note;whiteSpace=wrap;html=1;fillColor=#FFF2CC;strokeColor=#D6B656;fontSize=10;align=left;verticalAlign=top;size=14;" vertex="1" parent="1">
-          <mxGeometry x="850" y="908" width="290" height="104" as="geometry" />
+        <mxCell id="n_token" value="Đoạn quá dài được cắt nhỏ trước khi nhúng (giới hạn độ dài đầu vào của mô hình)." style="shape=note;whiteSpace=wrap;html=1;fillColor=#FFF2CC;strokeColor=#D6B656;fontSize=11;align=left;verticalAlign=top;size=14;" vertex="1" parent="1">
+          <mxGeometry x="850" y="876" width="290" height="74" as="geometry" />
         </mxCell>
-        <mxCell id="n_token" value="Giới hạn embedding 8192 token/input.&#10;Section dài (bảng hồ sơ lớn) bị cắt theo dòng,&#10;giữ ranh giới hàng bảng/bước + lặp tiền tố section&#10;→ tránh lỗi 400 làm mất cả file." style="shape=note;whiteSpace=wrap;html=1;fillColor=#FFF2CC;strokeColor=#D6B656;fontSize=10;align=left;verticalAlign=top;size=14;" vertex="1" parent="1">
-          <mxGeometry x="850" y="1030" width="290" height="98" as="geometry" />
+        <mxCell id="n_integrity" value="Đối chiếu số lượng giữa các kho để đảm bảo dữ liệu khớp." style="shape=note;whiteSpace=wrap;html=1;fillColor=#FFF2CC;strokeColor=#D6B656;fontSize=11;align=left;verticalAlign=top;size=14;" vertex="1" parent="1">
+          <mxGeometry x="850" y="1066" width="290" height="64" as="geometry" />
         </mxCell>
-        <mxCell id="n_integrity" value="Checkpoint mỗi N file (mặc định 1000):&#10;source = document = vector (sql.db),&#10;Chroma = LanceDB = document, và HNSW&#10;.bin (data_level0/header/length) khác rỗng." style="shape=note;whiteSpace=wrap;html=1;fillColor=#FFF2CC;strokeColor=#D6B656;fontSize=10;align=left;verticalAlign=top;size=14;" vertex="1" parent="1">
-          <mxGeometry x="850" y="1150" width="290" height="98" as="geometry" />
-        </mxCell>
-        <mxCell id="n_alt" value="(Đường thay thế) ingest_corpus.py nạp .md qua&#10;pipeline kotaemon (FileIndex + TokenSplitter) —&#10;chậm hơn, dùng khi cần đúng pipeline gốc." style="shape=note;whiteSpace=wrap;html=1;fillColor=#FFF2CC;strokeColor=#D6B656;fontSize=10;align=left;verticalAlign=top;size=14;" vertex="1" parent="1">
-          <mxGeometry x="850" y="800" width="290" height="80" as="geometry" />
+        <mxCell id="n_hybrid" value="Hai kho phục vụ TRUY HỒI LAI: vector (ngữ nghĩa) + BM25 (từ khóa)." style="shape=note;whiteSpace=wrap;html=1;fillColor=#FFF2CC;strokeColor=#D6B656;fontSize=11;align=left;verticalAlign=top;size=14;" vertex="1" parent="1">
+          <mxGeometry x="850" y="1396" width="290" height="74" as="geometry" />
         </mxCell>
 
-        <!-- EDGES -->
         <mxCell id="e1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;" edge="1" parent="1" source="in_raw" target="p_loadidx"><mxGeometry relative="1" as="geometry" /></mxCell>
         <mxCell id="e2" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;" edge="1" parent="1" source="in_index" target="p_loadidx"><mxGeometry relative="1" as="geometry" /></mxCell>
-        <mxCell id="e3" value="với mỗi file" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;fontSize=10;" edge="1" parent="1" source="p_loadidx" target="p_meta"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="e3" value="mỗi file" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;fontSize=10;" edge="1" parent="1" source="p_loadidx" target="p_meta"><mxGeometry relative="1" as="geometry" /></mxCell>
         <mxCell id="e4" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;" edge="1" parent="1" source="p_meta" target="p_render"><mxGeometry relative="1" as="geometry" /></mxCell>
         <mxCell id="e5" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;" edge="1" parent="1" source="p_render" target="p_empty"><mxGeometry relative="1" as="geometry" /></mxCell>
         <mxCell id="e6" value="Không" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;fontSize=10;" edge="1" parent="1" source="p_empty" target="p_skip"><mxGeometry relative="1" as="geometry" /></mxCell>
@@ -135,13 +124,12 @@
         <mxCell id="e11b" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;dashed=1;" edge="1" parent="1" source="o_md" target="i_prep"><mxGeometry relative="1" as="geometry" /></mxCell>
         <mxCell id="e12" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;" edge="1" parent="1" source="i_prep" target="i_split"><mxGeometry relative="1" as="geometry" /></mxCell>
         <mxCell id="e13" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;" edge="1" parent="1" source="i_split" target="i_embed"><mxGeometry relative="1" as="geometry" /></mxCell>
-        <mxCell id="e14" value="HTTPS" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;startArrow=block;endArrow=block;dashed=1;strokeColor=#B85450;fontSize=10;" edge="1" parent="1" source="i_embed" target="ext_azure"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="e14" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;startArrow=block;endArrow=block;dashed=1;strokeColor=#B85450;" edge="1" parent="1" source="i_embed" target="ext_azure"><mxGeometry relative="1" as="geometry" /></mxCell>
         <mxCell id="e15" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;" edge="1" parent="1" source="i_embed" target="i_write"><mxGeometry relative="1" as="geometry" /></mxCell>
         <mxCell id="e16" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;" edge="1" parent="1" source="i_write" target="i_fts"><mxGeometry relative="1" as="geometry" /></mxCell>
-        <mxCell id="e17" value="mỗi batch" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=open;dashed=1;strokeColor=#D79B00;fontSize=10;" edge="1" parent="1" source="i_write" target="i_check"><mxGeometry relative="1" as="geometry" /></mxCell>
+        <mxCell id="e17" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=open;dashed=1;strokeColor=#D79B00;" edge="1" parent="1" source="i_write" target="i_check"><mxGeometry relative="1" as="geometry" /></mxCell>
         <mxCell id="e18" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=block;" edge="1" parent="1" source="i_fts" target="i_done"><mxGeometry relative="1" as="geometry" /></mxCell>
 
-        <!-- writes to stores -->
         <mxCell id="e19" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=open;dashed=1;strokeColor=#666666;exitX=0.25;exitY=1;exitDx=0;exitDy=0;" edge="1" parent="1" source="i_write" target="s_chroma"><mxGeometry relative="1" as="geometry" /></mxCell>
         <mxCell id="e20" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=open;dashed=1;strokeColor=#666666;" edge="1" parent="1" source="i_fts" target="s_lance"><mxGeometry relative="1" as="geometry" /></mxCell>
         <mxCell id="e21" style="edgeStyle=orthogonalEdgeStyle;rounded=0;html=1;endArrow=open;dashed=1;strokeColor=#666666;exitX=0.6;exitY=1;exitDx=0;exitDy=0;" edge="1" parent="1" source="i_write" target="s_sql"><mxGeometry relative="1" as="geometry" /></mxCell>
