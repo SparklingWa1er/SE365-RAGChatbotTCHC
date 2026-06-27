@@ -5,6 +5,8 @@ import type {
   ChatRequest,
   ConversationDetail,
   ConversationSummary,
+  GeocodeResult,
+  NearbyResult,
   SseEvent,
   StreamHandlers,
 } from "./types";
@@ -69,6 +71,33 @@ export async function defaultSuggestions(): Promise<string[][]> {
     await fetch(`${BASE}/suggestions/default`),
   );
   return d.suggestions;
+}
+
+// ── Places: địa điểm xử lý thủ tục gần người dùng ──────────────────────────
+export async function nearbyPlaces(req: {
+  agency: string;
+  lat?: number;
+  lng?: number;
+  address?: string;
+  hint?: string;
+}): Promise<NearbyResult> {
+  return json(
+    await fetch(`${BASE}/places/nearby`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(req),
+    }),
+  );
+}
+
+export async function geocodePlace(address: string): Promise<GeocodeResult> {
+  return json(
+    await fetch(`${BASE}/places/geocode`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ address }),
+    }),
+  );
 }
 
 // ── Chat: stop ─────────────────────────────────────────────────────────────

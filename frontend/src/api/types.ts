@@ -43,6 +43,41 @@ export interface ChatRequest {
   selected_file_ids?: string[];
 }
 
+// ── Tính năng bản đồ: địa điểm xử lý thủ tục gần người dùng ─────────────────
+export interface Place {
+  place_id: string | null;
+  title: string | null;
+  address: string | null;
+  lat: number | null; // null = thẻ web fallback (không cắm marker)
+  lng: number | null;
+  distance_km: number | null;
+  phone: string | null;
+  hours: string | null;
+  open_state: string | null;
+  rating: number | null;
+  reviews: number | null;
+  type: string | null;
+  website: string | null;
+  thumbnail: string | null;
+  directions_url: string | null;
+  is_web: boolean;
+}
+
+export interface NearbyResult {
+  places: Place[];
+  web_notes: Place[]; // thẻ web tham khảo (khi data SerpAPI không đủ)
+  source: "serpapi" | "web" | "mixed" | "none";
+  sufficient: boolean;
+  query: string;
+  origin: { lat: number; lng: number };
+}
+
+export interface GeocodeResult {
+  lat: number;
+  lng: number;
+  display_name: string;
+}
+
 // ── SSE events (mỗi khung là `data: <json>\n\n`) ───────────────────────────
 export type SseEvent =
   | { type: "answer.reset" }

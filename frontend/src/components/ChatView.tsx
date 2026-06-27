@@ -1,3 +1,4 @@
+import { MapPin } from "lucide-react";
 import type { ReasoningMode, Turn } from "../App";
 import type { Citation } from "../api/types";
 import Composer from "./Composer";
@@ -21,6 +22,8 @@ interface Props {
   onStop: () => void;
   onRegen: () => void;
   onCitationClick: (citations: Citation[], n: number) => void;
+  canMap: boolean; // có lượt trả lời → cho mở "địa điểm xử lý"
+  onOpenMap: () => void;
 }
 
 export default function ChatView({
@@ -40,6 +43,8 @@ export default function ChatView({
   onStop,
   onRegen,
   onCitationClick,
+  canMap,
+  onOpenMap,
 }: Props) {
   // Màn hình "new conversation": chưa có lượt nào và không đang stream.
   const isEmpty = turns.length === 0 && !pendingUser && !streaming;
@@ -101,6 +106,18 @@ export default function ChatView({
         onSend={onSend}
         onStop={onStop}
         onRegen={onRegen}
+        actionSlot={
+          canMap ? (
+            <button
+              type="button"
+              onClick={onOpenMap}
+              className="inline-flex items-center gap-1.5 rounded-full border border-border bg-card px-3 py-1.5 text-xs font-medium text-foreground shadow-sm transition hover:bg-muted/60"
+            >
+              <MapPin className="size-3.5 text-primary" />
+              Địa điểm xử lý gần bạn
+            </button>
+          ) : null
+        }
       />
     </main>
   );

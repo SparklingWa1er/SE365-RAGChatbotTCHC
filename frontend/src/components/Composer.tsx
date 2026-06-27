@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 import { ArrowUp, RotateCcw, Square } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -15,6 +15,8 @@ interface Props {
   // "thread" = đáy khung chat (có nền + padding); "hero" = nhúng trong màn hình
   // new conversation (parent tự lo nền/độ rộng).
   variant?: "thread" | "hero";
+  // nút phụ (vd "Địa điểm xử lý gần bạn") hiện trên hàng gợi ý.
+  actionSlot?: ReactNode;
 }
 
 export default function Composer({
@@ -25,6 +27,7 @@ export default function Composer({
   onStop,
   onRegen,
   variant = "thread",
+  actionSlot,
 }: Props) {
   const [text, setText] = useState("");
   const ready = text.trim().length > 0;
@@ -40,6 +43,11 @@ export default function Composer({
   return (
     <div className={hero ? "" : "bg-card px-6 pt-2 pb-5"}>
       <div className={hero ? "" : "mx-auto max-w-[880px]"}>
+        {/* hàng nút phụ (địa điểm xử lý…) */}
+        {!streaming && actionSlot && (
+          <div className="mb-2 flex items-center">{actionSlot}</div>
+        )}
+
         {/* gợi ý câu hỏi */}
         {!streaming && suggestions.length > 0 && (
           <Suggestions className="mb-2">

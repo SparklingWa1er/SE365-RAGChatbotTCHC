@@ -279,6 +279,18 @@ class AnswerWithInlineCitation(AnswerWithContextPipeline):
             output = self.llm(messages).text
             yield Document(channel="chat", content=output)
 
+        # Một số model (đặc biệt ở pha tổng hợp ReAct) LẶP LẠI khối CITATION sau phần
+        # FINAL ANSWER → rò "CITATION【n】 START_PHRASE: ... END_PHRASE: ..." vào câu trả
+        # lời (và làm nhiễu mindmap vì mindmap sinh từ final_answer). Vòng break chỉ bắt
+        # header "CITATION LIST"; bản lặp thường thiếu header. Prose thật KHÔNG bao giờ
+        # chứa các token này nên cắt từ token đầu tiên gặp là an toàn cho cả simple lẫn ReAct.
+        cut = re.search(
+            r"(?im)^\s*CITATION\s*【\s*\d+\s*】|^\s*START_PHRASE\s*:|\bCITATION LIST\b",
+            final_answer,
+        )
+        if cut:
+            final_answer = final_answer[: cut.start()].rstrip()
+
         if logprobs:
             qa_score = np.exp(np.average(logprobs))
         else:

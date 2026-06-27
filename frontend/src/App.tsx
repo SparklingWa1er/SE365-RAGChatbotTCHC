@@ -9,6 +9,8 @@ import ChatTopbar from "./components/ChatTopbar";
 import SourcesPanel from "./components/SourcesPanel";
 import ResizeHandle from "./components/ResizeHandle";
 import SearchModal, { type SearchResult } from "./components/SearchModal";
+import PlacesDialog from "./components/PlacesDialog";
+import { guessAgency } from "./lib/places";
 
 const clamp = (v: number, min: number, max: number) =>
   Math.min(max, Math.max(min, v));
@@ -54,6 +56,11 @@ export default function App() {
   const streamBotRef = useRef("");
   const streamInfoRef = useRef("");
   const streamCitationsRef = useRef<Citation[]>([]);
+
+  // ── Places Dialog (địa điểm xử lý thủ tục gần người dùng) ──
+  const [mapOpen, setMapOpen] = useState(false);
+  const [mapAgency, setMapAgency] = useState("");
+  const [mapHint, setMapHint] = useState("");
 
   // ── Search Modal (tìm trong HỘI THOẠI HIỆN TẠI) ──
   const [searchOpen, setSearchOpen] = useState(false);
@@ -221,6 +228,13 @@ export default function App() {
 
   const openChats = useCallback(() => setPage("chats"), []);
 
+  // ── mở dialog địa điểm: đoán cơ quan từ hội thoại, lấy câu hỏi gần nhất làm hint ──
+  const openMap = useCallback(() => {
+    setMapAgency(guessAgency(turns));
+    setMapHint(turns.length ? turns[turns.length - 1].user : "");
+    setMapOpen(true);
+  }, [turns]);
+
   // mỗi tin nhắn (user/bot) trong hội thoại hiện tại khớp chuỗi → một kết quả
   const results = useMemo<SearchResult[]>(() => {
     const t = searchQuery.trim().toLowerCase();
@@ -332,6 +346,8 @@ export default function App() {
             onStop={stop}
             onRegen={regen}
             onCitationClick={handleCitationClick}
+            canMap={turns.length > 0 || pendingUser !== null}
+            onOpenMap={openMap}
           />
         )}
       </div>
@@ -349,6 +365,13 @@ export default function App() {
         results={results}
         onPick={pickResult}
         onClose={() => setSearchOpen(false)}
+      />
+
+      <PlacesDialog
+        open={mapOpen}
+        initialAgency={mapAgency}
+        hint={mapHint}
+        onClose={() => setMapOpen(false)}
       />
     </div>
   );

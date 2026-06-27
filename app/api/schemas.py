@@ -50,3 +50,18 @@ class SuggestRequest(BaseModel):
     # nếu không truyền, dùng lịch sử lưu trong conversation
     chat_history: Optional[list[list[str]]] = None
     language: Optional[str] = None
+
+
+# ── Tính năng bản đồ: địa điểm xử lý thủ tục gần người dùng ──────────────────
+class NearbyRequest(BaseModel):
+    """Tìm địa điểm cho cơ quan `agency` quanh (lat,lng). Nếu thiếu lat/lng nhưng có
+    `address` thì server tự geocode (Nominatim)."""
+    agency: str
+    lat: Optional[float] = None
+    lng: Optional[float] = None
+    address: Optional[str] = None     # địa chỉ gõ tay (fallback khi không cho định vị)
+    hint: str = ""                    # bối cảnh thêm cho fallback web (vd tên thủ tục)
+
+
+class GeocodeRequest(BaseModel):
+    address: str

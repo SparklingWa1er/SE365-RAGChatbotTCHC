@@ -16,6 +16,7 @@ from .routers import (
     chat,
     conversations,
     indices,
+    places,
     settings,
     suggestions,
     system,
@@ -41,7 +42,7 @@ app.add_middleware(
     expose_headers=["X-Conversation-Id"],
 )
 
-for r in (system, chat, conversations, suggestions, settings, indices):
+for r in (system, chat, conversations, suggestions, settings, indices, places):
     app.include_router(r.router)
 
 
