@@ -321,6 +321,8 @@
       <tr><td>Backend</td><td>FastAPI, truyền SSE (<code>app/api/</code>)</td></tr>
       <tr><td>Frontend</td><td>React 19 + Vite 5 + Tailwind 4</td></tr>
       <tr><td>Web fallback</td><td>Brave Search API (tuỳ chọn)</td></tr>
+      <tr><td>Bộ nhớ hội thoại</td><td>2 lớp: tóm tắt ngắn hạn + ký ức dài hạn (Chroma) — hỏi đáp đa lượt</td></tr>
+      <tr><td>Địa điểm / Bản đồ</td><td>SerpAPI Google Maps + Leaflet/OSM + OSRM (tuỳ chọn, cần <code>SERPAPI_KEY</code>)</td></tr>
     </table>
 
     <h2 id="kien-truc">Kiến trúc hệ thống</h2>
@@ -395,7 +397,10 @@ AZURE_OPENAI_EMBEDDINGS_DEPLOYMENT=text-embedding-3-large
 KH_APP_DATA_DIR=C:\ktem_data
 
 # Tuỳ chọn — bật web fallback cho ReAct agent (để trống = tắt):
-BRAVE_API_KEY=&lt;key&gt;</code></pre></div>
+BRAVE_API_KEY=&lt;key&gt;
+
+# Tuỳ chọn — bật tính năng "Địa điểm xử lý + bản đồ" (để trống = ẩn tính năng):
+SERPAPI_KEY=&lt;key tại https://serpapi.com/ — free ~100 search/tháng&gt;</code></pre></div>
     <div class="gh-alert caution"><p><b>Không commit <code>.env</code>.</b> File này chứa API key thật và đã được liệt kê trong <code>.gitignore</code>.</p></div>
 
     <h2 id="index"><span class="step-h"><span class="n">4</span> Tải index đã embed</span></h2>
@@ -432,6 +437,9 @@ npm run dev
       <tr><td><code>AZURE_OPENAI_EMBEDDINGS_DEPLOYMENT</code></td><td>✔</td><td>Tên deployment embedding — <code>text-embedding-3-large</code>.</td></tr>
       <tr><td><code>KH_APP_DATA_DIR</code></td><td>✔</td><td>Thư mục index. Giữ <code>C:\ktem_data</code> (ASCII).</td></tr>
       <tr><td><code>BRAVE_API_KEY</code></td><td>—</td><td>Bật web fallback cho ReAct; để trống = tắt.</td></tr>
+      <tr><td><code>SERPAPI_KEY</code></td><td>—</td><td>Bật tính năng "Địa điểm xử lý + bản đồ" (SerpAPI Google Maps); để trống = ẩn nút.</td></tr>
+      <tr><td><code>MEM_SUMMARY</code> / <code>MEM_EPISODIC</code></td><td>—</td><td>Bật/tắt bộ nhớ hội thoại lớp tóm tắt / ký ức dài hạn (mặc định bật = <code>1</code>).</td></tr>
+      <tr><td><code>MEM_FACTS</code></td><td>—</td><td>Trích "fact" người dùng cho ký ức dài hạn (mặc định tắt = <code>0</code>; tốn thêm 1 lời gọi LLM/lượt).</td></tr>
     </table>
 
     <h2 id="data-layout">Cấu trúc index &amp; dữ liệu</h2>
@@ -505,6 +513,16 @@ data: {"type": "done", "conversation_id": "...", "name": "...", "suggestions": [
     <p>Không. LLM &amp; embedding chạy trên Azure OpenAI; máy local chỉ chạy retrieval + UI.</p>
     <h3>Có bắt buộc Brave API không?</h3>
     <p>Không. Để trống <code>BRAVE_API_KEY</code> là tắt web fallback; ReAct vẫn tra corpus nội bộ bình thường.</p>
+    <h3>Tính năng "Địa điểm xử lý + bản đồ" cần gì?</h3>
+    <p>Cần đặt <code>SERPAPI_KEY</code> trong <code>.env</code> (free ~100 search/tháng tại
+    <a href="https://serpapi.com/" target="_blank" rel="noreferrer">serpapi.com</a>); để trống là ẩn tính năng.
+    Sau câu trả lời, bấm <b>"Địa điểm xử lý gần bạn"</b> → định vị (hoặc nhập địa chỉ) → danh sách cơ quan gần nhất
+    kèm <b>bản đồ Leaflet + đường đi (OSRM)</b>. Bản đồ, định tuyến và geocode dùng OpenStreetMap, <b>không cần key</b>.
+    <b>Lưu ý:</b> định vị trình duyệt cần <code>localhost</code> hoặc HTTPS — chạy bằng IP LAN thì dùng ô nhập địa chỉ.</p>
+    <h3>Bộ nhớ hội thoại có cần cấu hình không?</h3>
+    <p>Không. Bộ nhớ 2 lớp (tóm tắt ngắn hạn + ký ức dài hạn trên Chroma) <b>mặc định bật</b>, giúp hỏi đáp đa lượt
+    (giải tham chiếu "thủ tục <b>này</b>"). Có thể tắt/bật từng lớp qua <code>MEM_SUMMARY</code>,
+    <code>MEM_EPISODIC</code>, <code>MEM_FACTS</code> (xem <a href="#env-ref">tham chiếu <code>.env</code></a>).</p>
     <h3>Tốn bao nhiêu dung lượng?</h3>
     <p>Index ~1.5 GB (ở <code>C:\ktem_data</code>) + deps Python/Node. Tổng ~2.5 GB.</p>
     <h3>Triển khai online được không?</h3>
